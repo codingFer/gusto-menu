@@ -167,7 +167,7 @@ const creatorState = {
 /** Persist the entire creator form to localStorage. */
 function saveCreatorToLS() {
   const name    = document.getElementById('biz-name')?.value    ?? '';
-  const prefix  = document.getElementById('biz-prefix')?.value  ?? '+52';
+  const prefix  = document.getElementById('biz-prefix')?.value  ?? '+591';
   const phone   = document.getElementById('biz-phone')?.value   ?? '';
   const tagline = document.getElementById('biz-tagline')?.value ?? '';
   const promo   = document.getElementById('biz-promo')?.value   ?? '';
@@ -252,13 +252,24 @@ function renderCreator() {
 
       <!-- Generated Link -->
       <div class="section-card" id="link-section" style="display:none">
-        <div class="section-title">🔗 Tu Link Generado</div>
-        <div class="link-box" id="link-box">
-          <span id="link-text"></span>
-          <button class="btn btn--secondary btn--sm" id="copy-link-btn">Copiar</button>
+        <div class="section-title">🔗 Tu Menú está listo</div>
+        
+        <div class="form-group" style="margin-bottom:var(--space-md)">
+          <label class="form-label">Link directo</label>
+          <div class="link-box" id="link-box">
+            <span id="link-text"></span>
+            <button class="btn btn--secondary btn--sm" id="copy-link-btn">Copiar</button>
+          </div>
         </div>
+
+        <div class="form-group" style="margin-bottom:var(--space-md)">
+          <label class="form-label">Texto para compartir (WhatsApp/Redes)</label>
+          <div class="form-textarea" id="share-text-box" style="white-space: pre-wrap; height: auto; min-height: 120px; font-size: 14px; background: var(--surface-low); border: 1px solid var(--outline-variant); padding: var(--space-sm);"></div>
+          <button class="btn btn--secondary btn--sm btn--full" id="copy-text-btn" style="margin-top:var(--space-xs)">Copiar Texto Completo</button>
+        </div>
+
         <div style="display:flex;gap:var(--space-sm);margin-top:var(--space-md)">
-          <button class="btn btn--primary btn--full" id="open-menu-btn">Ver Menú →</button>
+          <button class="btn btn--primary btn--full" id="open-menu-btn">Ver Menú Digital →</button>
         </div>
       </div>
     </div>
@@ -378,10 +389,29 @@ function handleGenerate() {
   const encoded = encodeMenu(data);
   const url = `${location.origin}${location.pathname}#/menu?d=${encoded}`;
 
+  // Build shareable text
+  const sep = '━━━━━━━━━━━━━━━━━━━━';
+  const itemLines = data.items.map(item => `   ${item.emoji} *${item.name}* — ${formatPrice(item.price)}`).join('\n');
+  const shareText = 
+    `🍽️ *${data.name}*\n` +
+    (data.tagline ? `_${data.tagline}_\n` : '') +
+    `${sep}\n\n` +
+    `📖 *Menú de Hoy:*\n` +
+    `${itemLines}\n\n` +
+    `${sep}\n` +
+    `👇 *Haz tu pedido aquí:*\n` +
+    `${url}`;
+
   const section = document.getElementById('link-section');
   section.style.display = 'block';
+  
   document.getElementById('link-text').textContent = url;
   document.getElementById('copy-link-btn').onclick = () => copyToClipboard(url);
+  
+  const textBox = document.getElementById('share-text-box');
+  textBox.textContent = shareText;
+  document.getElementById('copy-text-btn').onclick = () => copyToClipboard(shareText);
+
   document.getElementById('open-menu-btn').onclick = () => navigate(`/menu?d=${encoded}`);
   section.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -619,17 +649,39 @@ function sendWhatsApp(cartItems, total) {
     return;
   }
 
-  const bizName = state.menuData.name;
-  const lines = cartItems.map(({ item, qty }) =>
-    `  • ${qty}x ${item.emoji} ${item.name} — ${formatPrice(qty * parseFloat(item.price))}`
-  );
+  const { name: bizName, tagline, promo } = state.menuData;
+  const sep  = '━━━━━━━━━━━━━━━━━━━━';
+  const sep2 = '┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄';
 
-  const msg =
-    `¡Hola ${bizName}! 👋\n` +
-    `Soy *${customerName}* y me gustaría hacer el siguiente pedido:\n\n` +
-    lines.join('\n') +
-    `\n\n*Total: ${formatPrice(total)}*\n\n` +
-    `_Pedido generado con GustoMenu_ 🍽️`;
+  // Header
+  const header = [
+    `🍽️ *${bizName}*`,
+    tagline ? `_${tagline}_` : '',
+    sep,
+  ].filter(Boolean).join('\n');
+
+  // Item lines  —  emoji · name · qty × unit = subtotal
+  const itemLines = cartItems.map(({ item, qty }) => {
+    const unit    = parseFloat(item.price);
+    const subtot  = formatPrice(qty * unit);
+    return `${item.emoji} *${item.name}*\n   ${qty} × ${formatPrice(unit)} = *${subtot}*`;
+  }).join('\n\n');
+
+  // Promo note (if any)
+  const promoLine = promo ? `\n🎉 _Promo: ${promo}_` : '';
+
+  // Footer
+  const footer = [
+    sep,
+    `👤 *Cliente:* ${customerName}`,
+    sep2,
+    `🛒 *Total a pagar: ${formatPrice(total)}*`,
+    sep,
+    promoLine,
+    `\n_Pedido realizado vía GustoMenu_ 🔗`,
+  ].filter(Boolean).join('\n');
+
+  const msg = `${header}\n\n${itemLines}\n\n${footer}`;
 
   const phone = state.menuData.phone.replace(/\D/g, '');
   const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
