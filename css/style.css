@@ -272,7 +272,8 @@ input, textarea, select { font-family: var(--font); }
 .dish-item {
   display: flex; align-items: flex-start; gap: var(--space-sm);
   background: var(--surface-low); border-radius: var(--radius-md);
-  padding: var(--space-md); margin-bottom: var(--space-sm);
+  padding: var(--space-md); padding-right: 42px; /* Extra room for the remove button */
+  margin-bottom: var(--space-sm);
   position: relative; border: 1px solid var(--outline-variant);
   transition: border-color 0.2s;
 }
@@ -285,7 +286,13 @@ input, textarea, select { font-family: var(--font); }
   transition: background 0.2s;
 }
 .dish-emoji-btn:hover { background: var(--surface-high); }
-.dish-fields { flex: 1; display: flex; flex-direction: column; gap: var(--space-sm); }
+.dish-fields { 
+  flex: 1; 
+  display: flex; 
+  flex-direction: column; 
+  gap: var(--space-sm);
+  min-width: 0; /* Prevents flex children from overflowing */
+}
 .dish-name-input { font-size: 16px; font-weight: 600; }
 .price-row { display: flex; align-items: center; gap: var(--space-sm); }
 .price-symbol { color: var(--on-surface-variant); font-weight: 600; }
@@ -298,6 +305,34 @@ input, textarea, select { font-family: var(--font); }
   transition: background 0.2s, color 0.2s;
 }
 .dish-remove:hover { background: rgba(186,26,26,0.1); color: var(--error); }
+
+/* Dish reordering */
+.dish-order-ctrls {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-self: center;
+}
+.order-btn {
+  width: 32px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-container);
+  color: var(--on-surface-variant);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.order-btn:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+}
+.order-btn:not(:disabled):hover {
+  background: var(--surface-high);
+  color: var(--primary);
+}
 
 /* Emoji picker dropdown */
 .emoji-picker-wrap { position: relative; }
@@ -517,6 +552,17 @@ input, textarea, select { font-family: var(--font); }
   .home-steps { grid-template-columns: 1fr; }
   .menu-grid { grid-template-columns: 1fr; }
   .promo-emoji { font-size: 40px; }
+  
+  /* Compact dish items on small mobile */
+  .dish-item {
+    padding: var(--space-sm);
+    padding-right: 38px;
+    gap: 6px;
+  }
+  .dish-order-ctrls { gap: 2px; }
+  .order-btn { width: 28px; height: 24px; font-size: 10px; }
+  .dish-emoji-btn { width: 48px; height: 48px; font-size: 24px; }
+  .price-input { width: 85px; }
 }
 
 /* Body padding for sticky creator CTA */

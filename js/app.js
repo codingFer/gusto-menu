@@ -383,6 +383,10 @@ function renderDishList() {
     wrap.className = 'dish-item emoji-picker-wrap';
     const isCompleto = d.type === 'completo';
     wrap.innerHTML = `
+      <div class="dish-order-ctrls">
+        <button class="order-btn" data-move-up="${i}" ${i === 0 ? 'disabled' : ''} title="Subir">▲</button>
+        <button class="order-btn" data-move-down="${i}" ${i === creatorState.dishes.length - 1 ? 'disabled' : ''} title="Bajar">▼</button>
+      </div>
       <button class="dish-emoji-btn" id="emoji-btn-${i}" title="Elegir emoji">${d.emoji}</button>
       ${creatorState.openEmojiIdx === i ? buildEmojiPicker(i) : ''}
       <div class="dish-fields">
@@ -448,6 +452,22 @@ function renderDishList() {
     if (removeBtn) removeBtn.onclick = () => {
       creatorState.dishes.splice(i, 1);
       creatorState.openEmojiIdx = null;
+      renderDishList();
+      saveCreatorToLS();
+    };
+    
+    // Order controls
+    const moveUp = wrap.querySelector(`[data-move-up="${i}"]`);
+    if (moveUp) moveUp.onclick = () => {
+      const [item] = creatorState.dishes.splice(i, 1);
+      creatorState.dishes.splice(i - 1, 0, item);
+      renderDishList();
+      saveCreatorToLS();
+    };
+    const moveDown = wrap.querySelector(`[data-move-down="${i}"]`);
+    if (moveDown) moveDown.onclick = () => {
+      const [item] = creatorState.dishes.splice(i, 1);
+      creatorState.dishes.splice(i + 1, 0, item);
       renderDishList();
       saveCreatorToLS();
     };
