@@ -21,8 +21,48 @@ const EMOJIS = [
   '🧁','🍰','🎂','🍩','🍪','🍫','🍦','🍨','🍧','🥧',
   '🍺','🍷','🥂','🍹','🧃','🥤','☕','🧋','🫖','🍵',
   '🫔','🥙','🫕','🍛','🍲','🥣','🍱','🍘','🥟','🦪',
-  '🍑','🍓','🍉','🍌','🍋','🍊','🫐','🥭','🍇','🥝',
+  '🍑','🍓','🍉','🍌','🍋','🍊','🫐','🥭','🍇','賞',
 ];
+
+const KEYWORD_EMOJI = {
+  'hamburguesa': '🍔', 'burger': '🍔',
+  'pizza': '🍕',
+  'taco': '🌮',
+  'burrito': '🌯',
+  'sushi': '🍣',
+  'ramen': '🍜', 'sopa': '🍲', 'caldo': '🍲',
+  'pasta': '🍝', 'fideo': '🍝', 'tallarin': '🍝',
+  'ensalada': '🥗',
+  'carne': '🥩', 'asado': '🥩', 'filete': '🥩', 'lomo': '🥩',
+  'pollo': '🍗', 'alitas': '🍗',
+  'pescado': '🐟', 'trucha': '🐟', 'ceviche': '🐟',
+  'arroz': '🍚', 'chaufa': '🍚',
+  'papas': '🍟', 'frito': '🍟',
+  'huevo': '🍳', 'desayuno': '🍳',
+  'empanada': '🥟', 'salteña': '🥟',
+  'sandwich': '🥪', 'emparedado': '🥪',
+  'pan': '🍞',
+  'cafe': '☕', 'té': '☕',
+  'jugo': '🥤', 'refresco': '🥤', 'soda': '🥤', 'gaseosa': '🥤',
+  'cerveza': '🍺',
+  'vino': '🍷',
+  'coctel': '🍹', 'trago': '🍹',
+  'helado': '🍦',
+  'pastel': '🍰', 'torta': '🍰', 'postre': '🍰',
+  'chocolate': '🍫',
+  'donas': '🍩',
+  'fruta': '🍎',
+  'silpancho': '🍛', 'picante': '🍛', 'ají': '🌶️',
+  'majadito': '🥘',
+};
+
+function autoSuggestEmoji(text) {
+  const lower = text.toLowerCase();
+  for (const [key, emoji] of Object.entries(KEYWORD_EMOJI)) {
+    if (lower.includes(key)) return emoji;
+  }
+  return null;
+}
 
 // ─── Utilities ────────────────────────────────────────────────
 function encodeMenu(data) {
@@ -347,10 +387,37 @@ function renderDishList() {
 
     // Sync inputs to state + persist
     if (isCompleto) {
-      wrap.querySelector(`#dish-soup-${i}`).oninput = e => { creatorState.dishes[i].soup = e.target.value; saveCreatorToLS(); };
-      wrap.querySelector(`#dish-main-${i}`).oninput = e => { creatorState.dishes[i].main = e.target.value; saveCreatorToLS(); };
+      wrap.querySelector(`#dish-soup-${i}`).oninput = e => { 
+        creatorState.dishes[i].soup = e.target.value; 
+        const suggested = autoSuggestEmoji(e.target.value);
+        if (suggested && suggested !== creatorState.dishes[i].emoji) {
+          creatorState.dishes[i].emoji = suggested;
+          const btn = document.getElementById(`emoji-btn-${i}`);
+          if (btn) btn.textContent = suggested;
+        }
+        saveCreatorToLS(); 
+      };
+      wrap.querySelector(`#dish-main-${i}`).oninput = e => { 
+        creatorState.dishes[i].main = e.target.value; 
+        const suggested = autoSuggestEmoji(e.target.value);
+        if (suggested && suggested !== creatorState.dishes[i].emoji) {
+          creatorState.dishes[i].emoji = suggested;
+          const btn = document.getElementById(`emoji-btn-${i}`);
+          if (btn) btn.textContent = suggested;
+        }
+        saveCreatorToLS(); 
+      };
     } else {
-      wrap.querySelector(`#dish-name-${i}`).oninput = e => { creatorState.dishes[i].name = e.target.value; saveCreatorToLS(); };
+      wrap.querySelector(`#dish-name-${i}`).oninput = e => { 
+        creatorState.dishes[i].name = e.target.value; 
+        const suggested = autoSuggestEmoji(e.target.value);
+        if (suggested && suggested !== creatorState.dishes[i].emoji) {
+          creatorState.dishes[i].emoji = suggested;
+          const btn = document.getElementById(`emoji-btn-${i}`);
+          if (btn) btn.textContent = suggested;
+        }
+        saveCreatorToLS(); 
+      };
     }
     wrap.querySelector(`#dish-price-${i}`).oninput = e => { creatorState.dishes[i].price = e.target.value; saveCreatorToLS(); };
     wrap.querySelector(`#emoji-btn-${i}`).onclick = () => {
