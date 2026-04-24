@@ -157,14 +157,54 @@ function renderHome() {
 }
 
 // ─── Page: Creator ────────────────────────────────────────────
+const LS_KEY = 'gustomenu_creator';
+
 const creatorState = {
   dishes: [{ emoji: '🍔', name: '', price: '' }],
   openEmojiIdx: null,
 };
 
+/** Persist the entire creator form to localStorage. */
+function saveCreatorToLS() {
+  const name    = document.getElementById('biz-name')?.value    ?? '';
+  const prefix  = document.getElementById('biz-prefix')?.value  ?? '+52';
+  const phone   = document.getElementById('biz-phone')?.value   ?? '';
+  const tagline = document.getElementById('biz-tagline')?.value ?? '';
+  const promo   = document.getElementById('biz-promo')?.value   ?? '';
+  // Sync dish inputs to state before serialising
+  creatorState.dishes.forEach((d, i) => {
+    const n = document.getElementById(`dish-name-${i}`);
+    const p = document.getElementById(`dish-price-${i}`);
+    if (n) d.name  = n.value;
+    if (p) d.price = p.value;
+  });
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      name, prefix, phone, tagline, promo,
+      dishes: creatorState.dishes,
+    }));
+  } catch { /* quota exceeded — ignore */ }
+}
+
+/** Load creator data from localStorage into creatorState + return business fields. */
+function loadCreatorFromLS() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
 function renderCreator() {
+  // ── Restore from localStorage before rendering ──
+  const saved = loadCreatorFromLS();
+  if (saved) {
+    if (saved.dishes && saved.dishes.length > 0) creatorState.dishes = saved.dishes;
+  }
+
   document.body.classList.add('has-creator-cta');
   const root = document.getElementById('app-root');
+  const s = saved || {};
   root.innerHTML = `
     <div class="container animate-in">
       <div class="creator-header">
@@ -178,25 +218,25 @@ function renderCreator() {
         <div style="display:flex;flex-direction:column;gap:var(--space-md)">
           <div class="form-group">
             <label class="form-label" for="biz-name">Nombre del negocio</label>
-            <input class="form-input" id="biz-name" type="text" placeholder="ej. Gusto Latino" maxlength="60" />
+            <input class="form-input" id="biz-name" type="text" placeholder="ej. Gusto Latino" maxlength="60" value="${escHtml(s.name || '')}" />
           </div>
           <div class="form-group">
             <label class="form-label">Número de WhatsApp</label>
             <div class="phone-row">
-              <input class="phone-prefix form-input" id="biz-prefix" type="text" value="+52" />
+              <input class="phone-prefix form-input" id="biz-prefix" type="text" value="${escHtml(s.prefix || '+52')}" />
               <div class="phone-input-wrap">
-                <input class="form-input" id="biz-phone" type="tel" placeholder="Número de teléfono" />
+                <input class="form-input" id="biz-phone" type="tel" placeholder="Número de teléfono" value="${escHtml(s.phone || '')}" />
               </div>
             </div>
             <span class="form-hint">Incluye código de país si es necesario.</span>
           </div>
           <div class="form-group">
             <label class="form-label" for="biz-tagline">Tagline / Slogan (opcional)</label>
-            <input class="form-input" id="biz-tagline" type="text" placeholder="ej. Sabor que se siente. 🌮🔥" maxlength="80" />
+            <input class="form-input" id="biz-tagline" type="text" placeholder="ej. Sabor que se siente. 🌮🔥" maxlength="80" value="${escHtml(s.tagline || '')}" />
           </div>
           <div class="form-group">
             <label class="form-label" for="biz-promo">Promoción del Día (opcional)</label>
-            <input class="form-input" id="biz-promo" type="text" placeholder="ej. 2x1 en Empanadas los Martes" maxlength="100" />
+            <input class="form-input" id="biz-promo" type="text" placeholder="ej. 2x1 en Empanadas los Martes" maxlength="100" value="${escHtml(s.promo || '')}" />
           </div>
         </div>
       </div>
@@ -233,9 +273,16 @@ function renderCreator() {
     </div>`;
 
   renderDishList();
+
+  // ── Attach save-on-change to all business inputs ──
+  ['biz-name','biz-prefix','biz-phone','biz-tagline','biz-promo'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', saveCreatorToLS);
+  });
+
   document.getElementById('add-dish-btn').onclick = () => {
     creatorState.dishes.push({ emoji: '🍽️', name: '', price: '' });
     renderDishList();
+    saveCreatorToLS();
     setTimeout(() => {
       const items = document.querySelectorAll('.dish-item');
       items[items.length - 1]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -266,9 +313,9 @@ function renderDishList() {
       ${creatorState.dishes.length > 1 ? `<button class="dish-remove" data-remove="${i}" title="Eliminar">✕</button>` : ''}`;
     list.appendChild(wrap);
 
-    // Sync inputs to state
-    wrap.querySelector(`#dish-name-${i}`).oninput = e => { creatorState.dishes[i].name = e.target.value; };
-    wrap.querySelector(`#dish-price-${i}`).oninput = e => { creatorState.dishes[i].price = e.target.value; };
+    // Sync inputs to state + persist
+    wrap.querySelector(`#dish-name-${i}`).oninput = e => { creatorState.dishes[i].name = e.target.value; saveCreatorToLS(); };
+    wrap.querySelector(`#dish-price-${i}`).oninput = e => { creatorState.dishes[i].price = e.target.value; saveCreatorToLS(); };
     wrap.querySelector(`#emoji-btn-${i}`).onclick = () => {
       creatorState.openEmojiIdx = creatorState.openEmojiIdx === i ? null : i;
       renderDishList();
@@ -278,6 +325,7 @@ function renderDishList() {
       creatorState.dishes.splice(i, 1);
       creatorState.openEmojiIdx = null;
       renderDishList();
+      saveCreatorToLS();
     };
   });
 }
@@ -294,6 +342,7 @@ function buildEmojiPicker(idx) {
         creatorState.dishes[idx].emoji = b.dataset.emoji;
         creatorState.openEmojiIdx = null;
         renderDishList();
+        saveCreatorToLS();
       };
     });
   }, 0);
