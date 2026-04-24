@@ -360,6 +360,21 @@ input, textarea, select { font-family: var(--font); }
 }
 .link-box span { flex: 1; font-size: 14px; color: var(--primary); font-weight: 500; }
 
+.share-text-box {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  height: auto;
+  min-height: 120px;
+  font-size: 14px;
+  background: var(--surface-low);
+  border: 1.5px solid var(--outline-variant);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius);
+  color: var(--on-surface);
+  line-height: 1.5;
+}
+
 /* ===== PAGE: MENU VIEW ===== */
 .menu-hero {
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);

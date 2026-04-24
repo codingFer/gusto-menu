@@ -316,7 +316,7 @@ function renderCreator() {
 
         <div class="form-group" style="margin-bottom:var(--space-md)">
           <label class="form-label">Texto para compartir (WhatsApp/Redes)</label>
-          <div class="form-textarea" id="share-text-box" style="white-space: pre-wrap; height: auto; min-height: 120px; font-size: 14px; background: var(--surface-low); border: 1px solid var(--outline-variant); padding: var(--space-sm);"></div>
+          <div id="share-text-box" class="share-text-box"></div>
           <button class="btn btn--secondary btn--sm btn--full" id="copy-text-btn" style="margin-top:var(--space-xs)">Copiar Texto Completo</button>
         </div>
 
