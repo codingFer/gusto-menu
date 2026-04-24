@@ -70,7 +70,11 @@ function encodeMenu(data) {
   catch { return ''; }
 }
 function decodeMenu(str) {
-  try { return JSON.parse(decodeURIComponent(escape(atob(str)))); }
+  try {
+    // URL parameters often turn '+' into ' ', breaking Base64. Fix it here.
+    const sanitized = (str || '').replace(/ /g, '+');
+    return JSON.parse(decodeURIComponent(escape(atob(sanitized))));
+  }
   catch { return null; }
 }
 
@@ -489,7 +493,7 @@ function handleGenerate() {
   data.items = validItems;
 
   const encoded = encodeMenu(data);
-  const url = `${location.origin}${location.pathname}#/menu?d=${encoded}`;
+  const url = `${location.origin}${location.pathname}#/menu?d=${encodeURIComponent(encoded)}`;
 
   // Build shareable text
   const sep = '━━━━━━━━━━━━━━━━━━━━';
