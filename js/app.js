@@ -160,7 +160,7 @@ function renderHome() {
 const LS_KEY = 'gustomenu_creator';
 
 const creatorState = {
-  dishes: [{ emoji: '🍔', name: '', price: '' }],
+  dishes: [{ type: 'standard', emoji: '🍔', name: '', price: '' }],
   openEmojiIdx: null,
 };
 
@@ -243,9 +243,12 @@ function renderCreator() {
 
       <!-- Menu Items -->
       <div class="section-card">
-        <div class="section-header">
+        <div class="section-header" style="flex-wrap: wrap; gap: var(--space-sm);">
           <div class="section-title" style="margin:0">Platillos</div>
-          <button class="btn btn--ghost btn--sm" id="add-dish-btn">➕ Agregar platillo</button>
+          <div style="display:flex; gap:var(--space-sm)">
+            <button class="btn btn--ghost btn--sm" id="add-dish-btn">➕ Platillo</button>
+            <button class="btn btn--ghost btn--sm" id="add-completo-btn">🍲 Almuerzo Completo</button>
+          </div>
         </div>
         <div id="dishes-list"></div>
       </div>
@@ -291,7 +294,16 @@ function renderCreator() {
   });
 
   document.getElementById('add-dish-btn').onclick = () => {
-    creatorState.dishes.push({ emoji: '🍽️', name: '', price: '' });
+    creatorState.dishes.push({ type: 'standard', emoji: '🍽️', name: '', price: '' });
+    renderDishList();
+    saveCreatorToLS();
+    setTimeout(() => {
+      const items = document.querySelectorAll('.dish-item');
+      items[items.length - 1]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  };
+  document.getElementById('add-completo-btn').onclick = () => {
+    creatorState.dishes.push({ type: 'completo', emoji: '🍲', name: 'Almuerzo Completo', soup: '', main: '', price: '' });
     renderDishList();
     saveCreatorToLS();
     setTimeout(() => {
@@ -309,12 +321,21 @@ function renderDishList() {
   creatorState.dishes.forEach((d, i) => {
     const wrap = document.createElement('div');
     wrap.className = 'dish-item emoji-picker-wrap';
+    const isCompleto = d.type === 'completo';
     wrap.innerHTML = `
       <button class="dish-emoji-btn" id="emoji-btn-${i}" title="Elegir emoji">${d.emoji}</button>
       ${creatorState.openEmojiIdx === i ? buildEmojiPicker(i) : ''}
       <div class="dish-fields">
-        <input class="form-input dish-name-input" id="dish-name-${i}" type="text"
-          placeholder="Nombre del platillo" value="${d.name}" maxlength="60" />
+        ${isCompleto ? `
+          <div style="font-size:12px; font-weight:700; color:var(--primary); margin-bottom:2px">ALMUERZO COMPLETO</div>
+          <input class="form-input" id="dish-soup-${i}" type="text"
+            placeholder="Sopa (ej. Sopa de Maní)" value="${d.soup || ''}" maxlength="60" style="margin-bottom:4px" />
+          <input class="form-input" id="dish-main-${i}" type="text"
+            placeholder="Segundo (ej. Silpancho)" value="${d.main || ''}" maxlength="60" />
+        ` : `
+          <input class="form-input dish-name-input" id="dish-name-${i}" type="text"
+            placeholder="Nombre del platillo" value="${d.name}" maxlength="60" />
+        `}
         <div class="price-row">
           <span class="price-symbol">Bs</span>
           <input class="form-input price-input" id="dish-price-${i}" type="number"
@@ -325,7 +346,12 @@ function renderDishList() {
     list.appendChild(wrap);
 
     // Sync inputs to state + persist
-    wrap.querySelector(`#dish-name-${i}`).oninput = e => { creatorState.dishes[i].name = e.target.value; saveCreatorToLS(); };
+    if (isCompleto) {
+      wrap.querySelector(`#dish-soup-${i}`).oninput = e => { creatorState.dishes[i].soup = e.target.value; saveCreatorToLS(); };
+      wrap.querySelector(`#dish-main-${i}`).oninput = e => { creatorState.dishes[i].main = e.target.value; saveCreatorToLS(); };
+    } else {
+      wrap.querySelector(`#dish-name-${i}`).oninput = e => { creatorState.dishes[i].name = e.target.value; saveCreatorToLS(); };
+    }
     wrap.querySelector(`#dish-price-${i}`).oninput = e => { creatorState.dishes[i].price = e.target.value; saveCreatorToLS(); };
     wrap.querySelector(`#emoji-btn-${i}`).onclick = () => {
       creatorState.openEmojiIdx = creatorState.openEmojiIdx === i ? null : i;
@@ -369,10 +395,19 @@ function collectCreatorData() {
 
   // Sync latest input values to state (in case renderDishList was not re-called)
   creatorState.dishes.forEach((d, i) => {
-    const n = document.getElementById(`dish-name-${i}`);
     const p = document.getElementById(`dish-price-${i}`);
-    if (n) d.name = n.value.trim();
     if (p) d.price = p.value;
+    
+    if (d.type === 'completo') {
+      const s = document.getElementById(`dish-soup-${i}`);
+      const m = document.getElementById(`dish-main-${i}`);
+      if (s) d.soup = s.value.trim();
+      if (m) d.main = m.value.trim();
+      d.name = `Almuerzo Completo (${d.soup} + ${d.main})`;
+    } else {
+      const n = document.getElementById(`dish-name-${i}`);
+      if (n) d.name = n.value.trim();
+    }
   });
 
   return { name, phone: (prefix + phone).replace(/\s/g,''), tagline, promo, items: creatorState.dishes };
@@ -468,10 +503,18 @@ function renderMenu(params) {
     card.className = 'menu-card animate-in';
     card.style.animationDelay = `${(i - startIdx) * 0.06}s`;
     card.id = `menu-card-${i}`;
+
+    let itemDisplayName = escHtml(item.name);
+    if (item.type === 'completo') {
+      itemDisplayName = `<div style="font-size:11px; color:var(--primary); font-weight:700">COMPLETO</div>
+                         <div style="font-weight:700">${escHtml(item.soup)}</div>
+                         <div style="font-size:13px; color:var(--on-surface-variant)">+ ${escHtml(item.main)}</div>`;
+    }
+
     card.innerHTML = `
       <div class="menu-card-top">
         <div class="menu-card-emoji">${item.emoji}</div>
-        <div class="menu-card-name">${escHtml(item.name)}</div>
+        <div class="menu-card-name">${itemDisplayName}</div>
       </div>
       <div class="menu-card-footer">
         <div class="menu-card-price">${formatPrice(item.price)}</div>
@@ -595,14 +638,20 @@ function renderCheckout(params) {
       <!-- Order Summary -->
       <div class="order-summary-card">
         <div class="order-summary-head">🧾 RESUMEN</div>
-        ${cartItems.map(({ item, qty }) => `
+        ${cartItems.map(({ item, qty }) => {
+          let displayName = escHtml(item.name);
+          if (item.type === 'completo') {
+            displayName = `<b>Almuerzo Completo</b><br><small>${escHtml(item.soup)} + ${escHtml(item.main)}</small>`;
+          }
+          return `
           <div class="order-item">
             <div class="order-item-left">
               <span class="order-qty-badge">${qty}x</span>
-              <span class="order-item-name">${item.emoji} ${escHtml(item.name)}</span>
+              <span class="order-item-name">${item.emoji} ${displayName}</span>
             </div>
             <span class="order-item-price">${formatPrice(qty * parseFloat(item.price))}</span>
-          </div>`).join('')}
+          </div>`;
+        }).join('')}
         <div class="order-totals">
           <div class="divider"></div>
           <div class="order-row"><span>Subtotal</span><span>${formatPrice(total)}</span></div>
@@ -664,7 +713,11 @@ function sendWhatsApp(cartItems, total) {
   const itemLines = cartItems.map(({ item, qty }) => {
     const unit    = parseFloat(item.price);
     const subtot  = formatPrice(qty * unit);
-    return `${item.emoji} *${item.name}*\n   ${qty} × ${formatPrice(unit)} = *${subtot}*`;
+    let name      = item.name;
+    if (item.type === 'completo') {
+      name = `Almuerzo Completo (${item.soup} + ${item.main})`;
+    }
+    return `${item.emoji} *${name}*\n   ${qty} × ${formatPrice(unit)} = *${subtot}*`;
   }).join('\n\n');
 
   // Promo note (if any)
