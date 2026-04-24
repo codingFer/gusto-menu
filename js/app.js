@@ -268,7 +268,7 @@ function renderCreator() {
           <div class="form-group">
             <label class="form-label">Número de WhatsApp</label>
             <div class="phone-row">
-              <input class="phone-prefix form-input" id="biz-prefix" type="text" value="${escHtml(s.prefix || '+52')}" />
+              <input class="phone-prefix form-input" id="biz-prefix" type="text" value="${escHtml(s.prefix || '+591')}" />
               <div class="phone-input-wrap">
                 <input class="form-input" id="biz-phone" type="tel" placeholder="Número de teléfono" value="${escHtml(s.phone || '')}" />
               </div>
