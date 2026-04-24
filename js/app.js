@@ -205,7 +205,7 @@ function renderHome() {
 const LS_KEY = 'gustomenu_creator';
 
 const creatorState = {
-  dishes: [{ type: 'standard', emoji: '🍔', name: '', price: '' }],
+  dishes: [],
   openEmojiIdx: null,
 };
 
@@ -288,14 +288,18 @@ function renderCreator() {
 
       <!-- Menu Items -->
       <div class="section-card">
-        <div class="section-header" style="flex-wrap: wrap; gap: var(--space-sm);">
+        <div class="section-header">
           <div class="section-title" style="margin:0">Platillos</div>
+        </div>
+        
+        <div id="dishes-list"></div>
+
+        <div class="creator-actions" style="display:flex; flex-direction:column; gap:var(--space-sm); margin-top:var(--space-md)">
           <div style="display:flex; gap:var(--space-sm)">
-            <button class="btn btn--ghost btn--sm" id="add-dish-btn">➕ Platillo</button>
-            <button class="btn btn--ghost btn--sm" id="add-completo-btn">🍲 Almuerzo Completo</button>
+            <button class="btn btn--ghost btn--sm btn--full" id="add-dish-btn">➕ Agregar Platillo</button>
+            <button class="btn btn--ghost btn--sm btn--full" id="add-completo-btn">🍲 Almuerzo Completo</button>
           </div>
         </div>
-        <div id="dishes-list"></div>
       </div>
 
       <!-- Generated Link -->
@@ -362,6 +366,17 @@ function renderCreator() {
 function renderDishList() {
   const list = document.getElementById('dishes-list');
   if (!list) return;
+  
+  if (creatorState.dishes.length === 0) {
+    list.innerHTML = `
+      <div style="text-align:center; padding:var(--space-xl) var(--space-md); border:2px dashed var(--outline-variant); border-radius:var(--radius-lg); margin-bottom:var(--space-md)">
+        <div style="font-size:32px; margin-bottom:var(--space-sm)">🍽️</div>
+        <div style="font-weight:700; color:var(--on-surface)">Tu menú está vacío</div>
+        <div style="font-size:13px; color:var(--on-surface-variant)">Comienza agregando tu primer platillo abajo.</div>
+      </div>`;
+    return;
+  }
+
   list.innerHTML = '';
   creatorState.dishes.forEach((d, i) => {
     const wrap = document.createElement('div');
