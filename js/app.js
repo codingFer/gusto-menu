@@ -35,7 +35,7 @@ function decodeMenu(str) {
 }
 
 function formatPrice(n) {
-  return '$' + parseFloat(n || 0).toFixed(2);
+  return 'Bs ' + parseFloat(n || 0).toFixed(2);
 }
 
 function getHashRoute() {
@@ -305,7 +305,7 @@ function renderDishList() {
         <input class="form-input dish-name-input" id="dish-name-${i}" type="text"
           placeholder="Nombre del platillo" value="${d.name}" maxlength="60" />
         <div class="price-row">
-          <span class="price-symbol">$</span>
+          <span class="price-symbol">Bs</span>
           <input class="form-input price-input" id="dish-price-${i}" type="number"
             placeholder="0.00" value="${d.price}" min="0" step="0.01" />
         </div>
