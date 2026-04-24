@@ -10,8 +10,9 @@
 
 // ─── State ────────────────────────────────────────────────────
 const state = {
-  cart: {},        // { itemIndex: quantity }
-  menuData: null,  // decoded menu object in menu/checkout views
+  cart: {},               // { itemIndex: quantity }
+  menuData: null,         // decoded menu object in menu/checkout views
+  currentMenuEncoded: null, // track which menu the cart belongs to
 };
 
 // ─── Emoji palette ────────────────────────────────────────────
@@ -136,7 +137,7 @@ function copyToClipboard(text) {
 // ─── Router ───────────────────────────────────────────────────
 function render() {
   const { path, params } = getHashRoute();
-  state.cart = {};
+  // state.cart = {}; // Removed: Wiping cart on every render breaks checkout flow
 
   document.body.classList.remove('has-creator-cta', 'has-sticky');
   setStickyBar(null);
@@ -528,8 +529,12 @@ function renderMenu(params) {
   const data = encoded ? decodeMenu(encoded) : null;
   if (!data || !data.items) return renderBadMenu();
 
+  // Only reset cart if we are loading a DIFFERENT menu
+  if (state.currentMenuEncoded !== encoded) {
+    state.cart = {};
+    state.currentMenuEncoded = encoded;
+  }
   state.menuData = data;
-  state.cart = {};
 
   const root = document.getElementById('app-root');
   const [promoItem, ...rest] = data.items;
@@ -656,7 +661,7 @@ function updateStickyCart(encoded) {
         <span class="sticky-label">Resumen del pedido</span>
         <span class="sticky-amount">${count} item${count > 1 ? 's' : ''} · ${formatPrice(total)}</span>
       </div>
-      <button class="btn btn--whatsapp btn--pill" id="checkout-btn" style="white-space:nowrap">
+      <button type="button" class="btn btn--whatsapp btn--pill" id="checkout-btn" style="white-space:nowrap">
         ▶ Pedir por WhatsApp
       </button>
     </div>`);
@@ -749,7 +754,7 @@ function renderCheckout(params) {
   // Sticky send button
   setStickyBar(`
     <div class="sticky-inner" style="flex-direction:column;gap:6px">
-      <button class="btn btn--whatsapp btn--full btn--pill" id="send-wa-btn" style="font-size:17px">
+      <button type="button" class="btn btn--whatsapp btn--full btn--pill" id="send-wa-btn" style="font-size:17px">
         Enviar Pedido por WhatsApp 📱
       </button>
       <div style="text-align:center;font-size:12px;color:var(--on-surface-variant)">
@@ -758,7 +763,10 @@ function renderCheckout(params) {
     </div>`);
   document.body.classList.add('has-sticky');
 
-  document.getElementById('send-wa-btn').onclick = () => sendWhatsApp(cartItems, total);
+  document.getElementById('send-wa-btn').onclick = (e) => {
+    e.preventDefault();
+    sendWhatsApp(cartItems, total);
+  };
 }
 
 function sendWhatsApp(cartItems, total) {
@@ -807,9 +815,11 @@ function sendWhatsApp(cartItems, total) {
 
   const msg = `${header}\n\n${itemLines}\n\n${footer}`;
 
-  const phone = state.menuData.phone.replace(/\D/g, '');
+  const phone = (state.menuData.phone || '').replace(/\D/g, '');
   const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
-  window.open(url, '_blank');
+  
+  // location.href is more reliable than window.open for external apps on mobile
+  window.location.href = url;
 }
 
 // ─── Not Found ────────────────────────────────────────────────
