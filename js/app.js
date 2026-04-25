@@ -13,6 +13,7 @@ const state = {
   cart: {},               // { itemIndex: quantity }
   menuData: null,         // decoded menu object in menu/checkout views
   currentMenuEncoded: null, // track which menu the cart belongs to
+  theme: 'light',         // light | dark
 };
 
 // ─── Emoji palette ────────────────────────────────────────────
@@ -134,6 +135,28 @@ function copyToClipboard(text) {
   });
 }
 
+// ─── Theme Management ──────────────────────────────────────────
+function initTheme() {
+  const saved = localStorage.getItem('gustomenu_theme');
+  const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  state.theme = saved || (systemDark ? 'dark' : 'light');
+  applyTheme();
+  
+  document.getElementById('theme-toggle').onclick = toggleTheme;
+}
+
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', state.theme);
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = state.theme === 'light' ? '☀️' : '🌙';
+}
+
+function toggleTheme() {
+  state.theme = state.theme === 'light' ? 'dark' : 'light';
+  localStorage.setItem('gustomenu_theme', state.theme);
+  applyTheme();
+}
+
 // ─── Router ───────────────────────────────────────────────────
 function render() {
   const { path, params } = getHashRoute();
@@ -170,7 +193,7 @@ function renderHome() {
       <div class="home-hero">
         <h1>Menú Digital<br>con WhatsApp 🚀</h1>
         <p>Crea tu menú en minutos, comparte el link y recibe pedidos directamente en tu WhatsApp.</p>
-        <button class="btn btn--full" style="background:#fff;color:var(--primary);font-weight:800;font-size:17px;" onclick="navigate('/crear')">
+        <button class="btn btn--full" style="background:var(--card-bg);color:var(--primary);font-weight:800;font-size:17px;" onclick="navigate('/crear')">
           🍽️ Crear mi Menú Gratis
         </button>
       </div>
@@ -879,4 +902,7 @@ function escHtml(str) {
 
 // ─── Boot ─────────────────────────────────────────────────────
 window.addEventListener('hashchange', render);
-window.addEventListener('DOMContentLoaded', render);
+window.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  render();
+});
