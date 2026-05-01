@@ -212,6 +212,34 @@ const Creator = () => {
     }, 100);
   };
 
+  const [history, setHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gustomenu_history');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+
+  const saveToHistory = () => {
+    if (!bizInfo.name) return showToast('⚠️ Nombre requerido');
+    const newEntry = {
+      id: Date.now(),
+      date: new Date().toLocaleString(),
+      bizInfo: { ...bizInfo },
+      dishes: [...dishes]
+    };
+    const newHistory = [newEntry, ...history].slice(0, 10); // Keep last 10
+    setHistory(newHistory);
+    localStorage.setItem('gustomenu_history', JSON.stringify(newHistory));
+    showToast('💾 Guardado en historial');
+  };
+
+  const loadFromHistory = (entry) => {
+    setBizInfo(entry.bizInfo);
+    setDishes(entry.dishes);
+    showToast('📋 Menú restaurado');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleSaveToDashboard = async () => {
     if (!myRestauranteId) {
       showToast('⚠️ No tienes un restaurante asignado');
@@ -230,6 +258,7 @@ const Creator = () => {
         promo: bizInfo.promo,
         items: dishes
       });
+      saveToHistory(); // Also save to local history when publishing
       showToast('✅ Cambios guardados en tu panel');
       navigate('/dashboard');
     } catch (err) {
@@ -409,11 +438,41 @@ const Creator = () => {
             <button className="btn btn--primary btn--full" onClick={() => { copyToClipboard(shareText); showToast('✅ Mensaje copiado'); }}>
               <Share2 size={18} /> Copiar para WhatsApp
             </button>
+            <button className="btn btn--ghost btn--full" onClick={saveToHistory}>
+              <Save size={18} /> Guardar en Mi Historial Local
+            </button>
             {user && (
               <button className="btn btn--secondary btn--full" onClick={handleSaveToDashboard} disabled={isSaving}>
                 <Save size={18} /> {isSaving ? 'Guardando...' : 'Publicar en mi Menú Web'}
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* History Section */}
+      {history.length > 0 && (
+        <div className="section-card">
+          <div className="section-title">🕒 Menús Recientes (Historial)</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+            {history.map(entry => (
+              <div key={entry.id} className="history-item" onClick={() => loadFromHistory(entry)} style={{ 
+                padding: '12px', 
+                background: 'var(--surface-low)', 
+                borderRadius: 'var(--radius-md)', 
+                cursor: 'pointer',
+                border: '1px solid var(--outline-variant)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '14px' }}>{entry.bizInfo.name}</div>
+                  <div style={{ fontSize: '12px', opacity: 0.6 }}>{entry.date} · {entry.dishes.length} platos</div>
+                </div>
+                <div style={{ color: 'var(--primary)' }}><Eye size={16} /></div>
+              </div>
+            ))}
           </div>
         </div>
       )}
