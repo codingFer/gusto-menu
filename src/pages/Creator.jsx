@@ -167,6 +167,7 @@ const Creator = () => {
     // Grouping for the message
     const soups = validItems.filter(i => i.type === 'sopa');
     const seconds = validItems.filter(i => i.type === 'segundo' || i.type === 'standard');
+    const secondsSueltos = validItems.filter(i => i.type === 'segundo suelto');
     const desserts = validItems.filter(i => i.type === 'postre');
     const drinks = validItems.filter(i => i.type === 'bebida');
 
@@ -205,6 +206,7 @@ const Creator = () => {
       `Te ofrecemos:\n` +
       buildSection('SOPAS', soups) +
       buildSection('SEGUNDOS', seconds) +
+      buildSection('SEGUNDOS SUELTOS', secondsSueltos) +
       buildSection('POSTRES', desserts) +
       buildSection('BEBIDAS', drinks) +
       (bizInfo.promo ? `\nESPECIAL DEL DIA:  *${bizInfo.promo}*\n` : '') +
@@ -430,6 +432,9 @@ const Creator = () => {
           </button>
           <button className="btn btn--ghost btn--sm" onClick={() => addDish('segundo')} title="Añadir Segundo">
             <Utensils size={18} /> Segundo
+          </button>
+          <button className="btn btn--ghost btn--sm" onClick={() => addDish('segundo suelto')} title="Añadir Segundo Suelto">
+            <Utensils size={18} /> Segundo Suelto
           </button>
           <button className="btn btn--ghost btn--sm" onClick={() => addDish('postre')} title="Añadir Postre">
             <IceCream size={18} /> Postre

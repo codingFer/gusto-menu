@@ -192,8 +192,8 @@ app.post('/api/restaurantes/full', authenticateToken, async (req, res) => {
     }
 
     // 5. Insert Platillos with correct tipo_id
-    // Mapping: sopa -> 1, segundo -> 2, postre -> 3, bebida -> 4
-    const typeMap = { 'sopa': 1, 'segundo': 2, 'postre': 3, 'bebida': 4, 'standard': 2 };
+    // Mapping: sopa -> 1, segundo -> 2, segundo suelto -> 3, postre -> 4, bebida -> 5
+    const typeMap = { 'sopa': 1, 'segundo': 2, 'segundo suelto': 3, 'postre': 4, 'bebida': 5, 'standard': 2 };
     
     for (let i = 0; i < items.length; i++) {
       const item = items[i];

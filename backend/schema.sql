@@ -108,5 +108,6 @@ INSERT INTO roles (name) VALUES ('admin'), ('owner'), ('customer');
 INSERT INTO tipos_platillo (nombre, descripcion, bloqueado) VALUES 
 ('Sopa', 'Plato líquido servido al inicio', TRUE),
 ('Segundo', 'Plato principal de la comida', TRUE),
+('Segundo Suelto', 'Plato principal sin sopa', TRUE),
 ('Postre', 'Dulce servido al final', TRUE),
 ('Bebida', 'Líquidos para acompañar', TRUE);
