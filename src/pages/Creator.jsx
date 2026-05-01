@@ -421,38 +421,58 @@ const Creator = () => {
             </div>
           )}
           {dishes.map((d, i) => (
-            <div key={i} className={`dish-item dish-item--${d.type}`}>
-              <div className="dish-order-ctrls">
-                <button className="order-btn" onClick={() => moveDish(i, 'up')} disabled={i === 0}><ChevronUp size={16} /></button>
-                <button className="order-btn" onClick={() => moveDish(i, 'down')} disabled={i === dishes.length - 1}><ChevronDown size={16} /></button>
-              </div>
-              <div style={{ position: 'relative' }}>
-                <button className="dish-emoji-btn" onClick={() => setOpenEmojiIdx(openEmojiIdx === i ? null : i)}>{d.emoji}</button>
-                {openEmojiIdx === i && (
-                  <div className="emoji-picker-popup">
-                    {EMOJIS.map(e => <button key={e} onClick={() => { updateDish(i, 'emoji', e); setOpenEmojiIdx(null); }}>{e}</button>)}
+            <div key={i} className={`dish-item dish-item--${d.type.replace(' ', '-')}`}>
+              <div className="dish-type-label">{d.type}</div>
+              
+              <div className="dish-main-content">
+                {/* Emoji column */}
+                <div className="dish-emoji-col">
+                  <div style={{ position: 'relative' }}>
+                    <button className="dish-emoji-btn" onClick={() => setOpenEmojiIdx(openEmojiIdx === i ? null : i)}>{d.emoji}</button>
+                    {openEmojiIdx === i && (
+                      <div className="emoji-picker-popup">
+                        {EMOJIS.map(e => <button key={e} onClick={() => { updateDish(i, 'emoji', e); setOpenEmojiIdx(null); }}>{e}</button>)}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              <div className="dish-fields">
-                <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--primary)', marginBottom: '2px', textTransform: 'uppercase' }}>
-                  {d.type}
+                  <button className="dish-remove-btn" onClick={() => removeDish(i)}>
+                    <Trash2 size={20} />
+                  </button>
                 </div>
-                <input 
-                  className="form-input" 
-                  type="text" 
-                  placeholder={`Nombre de la ${d.type}...`}
-                  value={d.name} 
-                  onChange={(e) => updateDish(i, 'name', e.target.value)} 
-                />
-                {d.type !== 'completo' && (
-                  <div className="price-row">
-                    <span className="price-symbol">Bs</span>
-                    <input className="form-input price-input" type="number" placeholder="0.00" value={d.price} onChange={(e) => updateDish(i, 'price', e.target.value)} />
-                  </div>
-                )}
+
+                {/* Fields column */}
+                <div className="dish-inputs-col">
+                  <input 
+                    className="dish-input-name" 
+                    type="text" 
+                    placeholder={`Nombre de la ${d.type}...`}
+                    value={d.name} 
+                    onChange={(e) => updateDish(i, 'name', e.target.value)} 
+                  />
+                  {d.type !== 'completo' && (
+                    <div className="dish-input-price-row">
+                      <span className="price-label">Bs</span>
+                      <input 
+                        className="dish-input-price" 
+                        type="number" 
+                        placeholder="0.00" 
+                        value={d.price} 
+                        onChange={(e) => updateDish(i, 'price', e.target.value)} 
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Order controls column */}
+                <div className="dish-order-col">
+                  <button className="order-btn" onClick={() => moveDish(i, 'up')} disabled={i === 0}>
+                    <ChevronUp size={24} />
+                  </button>
+                  <button className="order-btn" onClick={() => moveDish(i, 'down')} disabled={i === dishes.length - 1}>
+                    <ChevronDown size={24} />
+                  </button>
+                </div>
               </div>
-              <button className="dish-remove" onClick={() => removeDish(i)}><Trash2 size={16} /></button>
             </div>
           ))}
         </div>
