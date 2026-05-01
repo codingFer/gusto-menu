@@ -249,14 +249,30 @@ input, textarea, select { font-family: var(--font); }
 
 /* ===== TOAST ===== */
 .toast {
-  position: fixed; bottom: calc(var(--sticky-h) + 20px); left: 50%; transform: translateX(-50%);
+  position: fixed; 
+  top: 50%; 
+  left: 50%;
+  transform: translate(-50%, -50%);
   background: var(--on-surface); color: var(--surface);
-  padding: 12px 24px;
-  border-radius: var(--radius-full);
-  font-size: 15px; font-weight: 700;
-  z-index: 2000; white-space: nowrap;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  display: flex; align-items: center; gap: 8px;
+  padding: 16px 28px;
+  border-radius: var(--radius-lg);
+  font-size: 16px; font-weight: 800;
+  z-index: 9999; 
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  gap: 12px;
+  width: max-content;
+  max-width: 85vw;
+  word-break: break-word;
+  animation: toastPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes toastPop {
+  from { opacity: 0; transform: translate(-50%, -40%) scale(0.9); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 /* ===== PAGE: HOME / LANDING ===== */

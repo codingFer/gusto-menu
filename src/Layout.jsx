@@ -82,7 +82,7 @@ const Layout = ({ children }) => {
       )}
 
       {toast && (
-        <div className="toast animate-in">
+        <div className="toast">
           <span>{toast}</span>
         </div>
       )}
