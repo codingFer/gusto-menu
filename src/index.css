@@ -319,6 +319,22 @@ input, textarea, select { font-family: var(--font); }
 }
 .section-title { font-size: 20px; font-weight: 800; margin-bottom: var(--space-lg); color: var(--primary); display: flex; align-items: center; gap: 10px; }
 
+/* Dish group sections */
+.dish-group-section {
+  margin-bottom: 32px;
+}
+.dish-group-header {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--primary-container);
+}
+
 /* Dish item in creator (New Card Design) */
 .dish-item {
   background: #fdf2f2;
