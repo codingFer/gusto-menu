@@ -18,14 +18,14 @@ export async function login(username, password) {
   return data;
 }
 
-export async function register(username, password, email, role_id) {
+export async function register(username, password, email, role_id, restaurant_name, whatsapp) {
   const res = await fetch(`${API_URL}/register`, {
     method: 'POST',
     headers: { 
       'Content-Type': 'application/json',
       ...getAuthHeader()
     },
-    body: JSON.stringify({ username, password, email, role_id }),
+    body: JSON.stringify({ username, password, email, role_id, restaurant_name, whatsapp }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Error al registrarse');
@@ -80,5 +80,19 @@ export async function createFullMenu(menuData) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Error al guardar el menú');
+  return data;
+}
+
+export async function updateRestaurante(id, restData) {
+  const res = await fetch(`${API_URL}/restaurantes/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    },
+    body: JSON.stringify(restData),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error al actualizar el restaurante');
   return data;
 }

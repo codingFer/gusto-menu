@@ -126,6 +126,31 @@ app.post('/api/restaurantes/full', authenticateToken, async (req, res) => {
   }
 });
 
+app.put('/api/restaurantes/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  const { nombre, whatsapp, whatsapp_opcional, tema, imagen_url, slug } = req.body;
+  const user_id = req.user.id;
+
+  try {
+    // Verify ownership or admin
+    const { rows: existing } = await db.query('SELECT user_id FROM restaurantes WHERE id = ?', [id]);
+    if (existing.length === 0) return res.status(404).json({ error: 'Restaurante not found' });
+    
+    if (req.user.role_id !== 1 && existing[0].user_id !== user_id) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    await db.query(
+      'UPDATE restaurantes SET nombre = ?, whatsapp = ?, whatsapp_opcional = ?, tema = ?, imagen_url = ?, slug = ? WHERE id = ?',
+      [nombre, whatsapp, whatsapp_opcional, tema, imagen_url, slug, id]
+    );
+    res.json({ message: 'Restaurante updated' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error updating restaurante' });
+  }
+});
+
 // --- Platillos ---
 app.post('/api/platillos', authenticateToken, async (req, res) => {
   const { restaurante_id, nombre, precio, emoji, orden } = req.body;
@@ -143,17 +168,33 @@ app.post('/api/platillos', authenticateToken, async (req, res) => {
 
 // --- Usuarios & Auth ---
 app.post('/api/register', authenticateToken, isAdmin, async (req, res) => {
-  const { username, password, email, role_id } = req.body;
+  const { username, password, email, role_id, restaurant_name, whatsapp } = req.body;
   try {
     // Hash the password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const { rows } = await db.query(
+    // 1. Create user
+    const { rows: userRows } = await db.query(
       'INSERT INTO users (username, password, email, role_id) VALUES (?, ?, ?, ?)',
       [username, hashedPassword, email, role_id || 2]
     );
-    res.status(201).json({ id: rows.insertId, username, email });
+    const newUserId = userRows.insertId;
+
+    // 2. Create restaurant with provided data or defaults
+    const defaultSlug = `${username.toLowerCase()}-menu-${Math.floor(Math.random() * 1000)}`;
+    await db.query(
+      'INSERT INTO restaurantes (user_id, slug, nombre, whatsapp, tema) VALUES (?, ?, ?, ?, ?)',
+      [
+        newUserId, 
+        defaultSlug, 
+        restaurant_name || `Menú de ${username}`, 
+        whatsapp || '59100000000', 
+        'light'
+      ]
+    );
+
+    res.status(201).json({ id: newUserId, username, email });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error registering user' });
