@@ -69,6 +69,12 @@ export async function getRestauranteBySlug(slug) {
   return res.json();
 }
 
+export async function getRestauranteById(id) {
+  const res = await fetch(`${API_URL}/restaurantes/id/${id}`);
+  if (!res.ok) throw new Error('Restaurante no encontrado');
+  return res.json();
+}
+
 export async function createRestaurante(restData) {
   const res = await fetch(`${API_URL}/restaurantes`, {
     method: 'POST',
