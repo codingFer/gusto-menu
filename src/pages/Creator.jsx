@@ -38,7 +38,7 @@ const Creator = () => {
     name: '',
     prefix: '+591',
     phone: '',
-    tagline: 'La alternativa de comer saludable, está aquí',
+    tagline: 'Comida casera con calidad y sabor inigualable.',
     promo: '',
     address: '',
     sides: ''
@@ -255,7 +255,7 @@ const Creator = () => {
           </div>
           
           <div className="form-group">
-            <label className="form-label">Especial del día</label>
+            <label className="form-label">Especial del día (opcional)</label>
             <input className="form-input" id="biz-promo" placeholder="ej. Pollo al horno 17Bs" value={bizInfo.promo} onChange={handleBizChange} />
           </div>
 
