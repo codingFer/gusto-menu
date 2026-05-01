@@ -51,6 +51,8 @@ const Login = () => {
               <input 
                 className="form-input" 
                 type="text" 
+                name="username"
+                autoComplete="username"
                 placeholder="Tu nombre de usuario" 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -68,6 +70,8 @@ const Login = () => {
               <input 
                 className="form-input" 
                 type={showPassword ? 'text' : 'password'} 
+                name="password"
+                autoComplete="current-password"
                 placeholder="••••••••" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
