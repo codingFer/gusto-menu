@@ -63,12 +63,14 @@ const Dashboard = () => {
   return (
     <div className="container animate-in container--wide">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2xl)' }}>
-        <div>
-          <h1 style={{ fontSize: '28px', fontWeight: 800, color: 'var(--primary)' }}>Panel de Control</h1>
-          <p style={{ color: 'var(--on-surface-variant)' }}>Hola, <b>{user.username}</b>. {user.role_id === 1 ? 'Administrador del sistema.' : 'Gestiona tus menús aquí.'}</p>
+      <div className="dashboard-header">
+        <div className="dashboard-title">
+          <h1>Panel de Control</h1>
+          <p style={{ color: 'var(--on-surface-variant)' }}>
+            Hola, <b>{user.username}</b>. {user.role_id === 1 ? 'Administrador del sistema.' : 'Gestiona tus menús aquí.'}
+          </p>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+        <div className="dashboard-actions">
           {user.role_id === 1 && (
             <div className="tabs" style={{ background: 'var(--surface-container)', padding: '4px', borderRadius: 'var(--radius-md)', display: 'flex', gap: '4px' }}>
               <button 
@@ -113,7 +115,7 @@ const Dashboard = () => {
 };
 
 const MenusView = ({ restaurantes, loading, onAdd }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 'var(--space-lg)' }}>
+  <div className="menu-grid">
     <div 
       className="card" 
       style={{ 
@@ -134,8 +136,8 @@ const MenusView = ({ restaurantes, loading, onAdd }) => (
           <div style={{ background: 'var(--surface-container)', width: '56px', height: '56px', borderRadius: 'var(--radius)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Store size={32} style={{ color: 'var(--primary)' }} />
           </div>
-          <div>
-            <h3 style={{ fontWeight: 800 }}>{res.nombre}</h3>
+          <div style={{ overflow: 'hidden' }}>
+            <h3 style={{ fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{res.nombre}</h3>
             <span style={{ fontSize: '13px', color: 'var(--on-surface-variant)' }}>/{res.slug}</span>
           </div>
         </div>
@@ -208,34 +210,34 @@ const UsersView = ({ users, loading, showCreate, setShowCreate, onUserCreated })
 
   return (
     <div className="animate-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
         <h2 style={{ fontWeight: 800 }}>Usuarios del Sistema</h2>
         <button className="btn btn--primary btn--sm" onClick={() => setShowCreate(true)}>
           <UserPlus size={16} /> Nuevo Usuario
         </button>
       </div>
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead style={{ background: 'var(--surface-low)', textAlign: 'left' }}>
+      <div className="table-container">
+        <table className="data-table">
+          <thead>
             <tr>
-              <th style={{ padding: '16px', fontSize: '13px' }}>Usuario</th>
-              <th style={{ padding: '16px', fontSize: '13px' }}>Email</th>
-              <th style={{ padding: '16px', fontSize: '13px' }}>Rol</th>
-              <th style={{ padding: '16px', fontSize: '13px' }}>Fecha</th>
+              <th>Usuario</th>
+              <th>Email</th>
+              <th>Rol</th>
+              <th>Fecha</th>
             </tr>
           </thead>
           <tbody>
             {users.map(u => (
-              <tr key={u.id} style={{ borderBottom: '1px solid var(--outline-variant)' }}>
-                <td style={{ padding: '16px', fontWeight: 600 }}>{u.username}</td>
-                <td style={{ padding: '16px', opacity: 0.8 }}>{u.email}</td>
-                <td style={{ padding: '16px' }}>
+              <tr key={u.id}>
+                <td style={{ fontWeight: 600 }}>{u.username}</td>
+                <td style={{ opacity: 0.8 }}>{u.email}</td>
+                <td>
                   <span className="badge" style={{ background: u.role_id === 1 ? 'var(--primary-container)' : 'var(--surface-container)', color: u.role_id === 1 ? 'var(--primary)' : 'var(--on-surface)' }}>
                     {u.role_id === 1 ? <ShieldCheck size={12} style={{ marginRight: '4px' }} /> : null}
                     {u.role_id === 1 ? 'Admin' : 'Owner'}
                   </span>
                 </td>
-                <td style={{ padding: '16px', fontSize: '12px', opacity: 0.6 }}>{new Date(u.created_at).toLocaleDateString()}</td>
+                <td style={{ fontSize: '12px', opacity: 0.6 }}>{new Date(u.created_at).toLocaleDateString()}</td>
               </tr>
             ))}
           </tbody>
