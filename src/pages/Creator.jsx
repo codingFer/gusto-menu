@@ -41,7 +41,8 @@ const Creator = () => {
     tagline: 'Comida casera con calidad y sabor inigualable.',
     promo: '',
     address: '',
-    sides: ''
+    sides: '',
+    menuPrice: ''
   });
   
   const [dishes, setDishes] = useState([]);
@@ -148,6 +149,13 @@ const Creator = () => {
 
   const handleGenerate = () => {
     if (!bizInfo.name.trim()) { showToast('⚠️ Ingresa el nombre del negocio'); return; }
+
+    const hasSoup = dishes.some(d => d.type === 'sopa');
+    const hasSecond = dishes.some(d => d.type === 'segundo');
+    if (hasSoup && hasSecond && !bizInfo.menuPrice.trim()) {
+      showToast('⚠️ Ingresa el precio del menú completo');
+      return;
+    }
     
     const validItems = dishes.filter(d => d.name.trim() !== '');
 
@@ -197,13 +205,17 @@ const Creator = () => {
     const deco2 = emojiSets[Math.floor(Math.random() * emojiSets.length)];
     const randomGreet = ['😃👋', '✨😊', '🌟🙌', '🍳🔥'][Math.floor(Math.random() * 4)];
 
+    const hasCombo = soups.length > 0 && seconds.length > 0;
+    const comboPriceText = (hasCombo && bizInfo.menuPrice) ? `\n🍱 *ALMUERZO COMPLETO (Sopa + Segundo): Bs.${bizInfo.menuPrice}*\n` : '';
+
     const text = 
       `BUENOS DIAS!  ${randomGreet}\n` +
       `Estimados clientes!!!\n\n` +
       `Les enviamos nuestro menú del día \n` +
       ` ✨ *${bizInfo.name}* ✨ \n` +
       `*Menú día ${dateStr}*\n` +
-      `Te ofrecemos:\n` +
+      comboPriceText +
+      `\nTe ofrecemos:\n` +
       buildSection('SOPAS', soups) +
       buildSection('SEGUNDOS', seconds) +
       buildSection('SEGUNDOS SUELTOS', secondsSueltos) +
@@ -258,6 +270,14 @@ const Creator = () => {
       showToast('⚠️ No tienes un restaurante asignado');
       return;
     }
+
+    const hasSoup = dishes.some(d => d.type === 'sopa');
+    const hasSecond = dishes.some(d => d.type === 'segundo');
+    if (hasSoup && hasSecond && !bizInfo.menuPrice.trim()) {
+      showToast('⚠️ Ingresa el precio del menú completo');
+      return;
+    }
+
     setIsSaving(true);
     try {
       await createFullMenu({
@@ -311,6 +331,17 @@ const Creator = () => {
             <label className="form-label">Especial del día (opcional)</label>
             <input className="form-input" id="biz-promo" placeholder="ej. Pollo al horno 17Bs" value={bizInfo.promo} onChange={handleBizChange} />
           </div>
+
+          {(dishes.some(d => d.type === 'sopa') && dishes.some(d => d.type === 'segundo')) && (
+            <div className="form-group animate-in" style={{ background: 'var(--primary-container)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--primary)' }}>
+              <label className="form-label" style={{ color: 'var(--on-primary-container)', fontWeight: 800 }}>💰 Precio Almuerzo Completo (Sopa + Segundo)</label>
+              <div className="price-row" style={{ background: 'var(--surface)' }}>
+                <span className="price-symbol">Bs</span>
+                <input className="form-input price-input" id="biz-menuPrice" type="number" placeholder="ej. 15" value={bizInfo.menuPrice} onChange={handleBizChange} />
+              </div>
+              <span style={{ fontSize: '11px', color: 'var(--primary)', marginTop: '4px', display: 'block' }}>Este precio se mostrará como el costo del menú completo.</span>
+            </div>
+          )}
 
           <div className="form-group">
             <label className="form-label">Guarniciones (opcional)</label>
