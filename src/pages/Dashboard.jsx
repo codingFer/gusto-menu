@@ -26,7 +26,7 @@ const Dashboard = () => {
   const [restaurantes, setRestaurantes] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('menus'); // 'menus' | 'users'
+  const [activeTab, setActiveTab] = useState('restaurantes'); // 'restaurantes' | 'users'
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [editingRes, setEditingRes] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
@@ -84,18 +84,18 @@ const Dashboard = () => {
         <div className="dashboard-title">
           <h1>Panel de Control</h1>
           <p style={{ color: 'var(--on-surface-variant)' }}>
-            Hola, <b>{user.username}</b>. {user.role_id === 1 ? 'Administrador del sistema.' : 'Gestiona tus menús aquí.'}
+            Hola, <b>{user.username}</b>. {user.role_id === 1 ? 'Administrador del sistema.' : 'Gestiona tus restaurantes aquí.'}
           </p>
         </div>
         <div className="dashboard-actions">
           {user.role_id === 1 && (
             <div className="tabs" style={{ background: 'var(--surface-container)', padding: '4px', borderRadius: 'var(--radius-md)', display: 'flex', gap: '4px' }}>
               <button 
-                className={`btn btn--sm ${activeTab === 'menus' ? 'btn--primary' : 'btn--ghost'}`}
-                style={{ border: 'none', boxShadow: activeTab === 'menus' ? undefined : 'none' }}
-                onClick={() => { setActiveTab('menus'); setShowCreateUser(false); }}
+                className={`btn btn--sm ${activeTab === 'restaurantes' ? 'btn--primary' : 'btn--ghost'}`}
+                style={{ border: 'none', boxShadow: activeTab === 'restaurantes' ? undefined : 'none' }}
+                onClick={() => { setActiveTab('restaurantes'); setShowCreateUser(false); }}
               >
-                <Store size={16} /> Menús
+                <Store size={16} /> Restaurantes
               </button>
               <button 
                 className={`btn btn--sm ${activeTab === 'users' ? 'btn--primary' : 'btn--ghost'}`}
@@ -109,8 +109,8 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {activeTab === 'menus' ? (
-        <MenusView 
+      {activeTab === 'restaurantes' ? (
+        <RestaurantsView 
           restaurantes={restaurantes} 
           loading={loading} 
           onAdd={() => navigate('/crear')} 
@@ -250,7 +250,7 @@ const UserEditModal = ({ targetUser, onClose, onSaved }) => {
   );
 };
 
-const MenusView = ({ restaurantes, loading, onAdd, onEdit }) => (
+const RestaurantsView = ({ restaurantes, loading, onAdd, onEdit }) => (
   <div className="menu-grid">
     <div 
       className="card" 
@@ -263,7 +263,7 @@ const MenusView = ({ restaurantes, loading, onAdd, onEdit }) => (
       <div style={{ background: 'var(--primary-container)', color: 'var(--primary)', padding: '16px', borderRadius: '50%', marginBottom: '16px' }}>
         <Plus size={32} />
       </div>
-      <span style={{ fontWeight: 700 }}>Crear Nuevo Menú</span>
+      <span style={{ fontWeight: 700 }}>Crear Nuevo Restaurante</span>
     </div>
 
     {!loading && restaurantes.map(res => (

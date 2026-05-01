@@ -47,7 +47,7 @@ const Layout = ({ children }) => {
           )}
           {isHome && (
             <button className="btn btn--primary btn--sm" onClick={() => navigate('/crear')}>
-              + Crear Menú
+              + Crear Restaurante
             </button>
           )}
           <button 
