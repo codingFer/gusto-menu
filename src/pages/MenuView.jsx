@@ -93,8 +93,9 @@ const MenuView = () => {
           <div key={i} className="menu-card animate-in" style={{ animationDelay: `${(i * 0.05)}s` }}>
             <div style={{ display: 'flex', gap: '12px' }}>
               <div className="menu-card-emoji">{item.emoji}</div>
-              <div>
+              <div style={{ flex: 1 }}>
                 <div className="menu-card-name">{item.nombre || item.name}</div>
+                {(item.tipo || item.type) && <div style={{ fontSize: '10px', color: 'var(--primary)', fontWeight: 800, textTransform: 'uppercase' }}>{item.tipo || item.type}</div>}
               </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
@@ -103,6 +104,55 @@ const MenuView = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      <CheckoutBar data={data} />
+    </div>
+  );
+};
+
+const CheckoutBar = ({ data }) => {
+  const { cart } = useApp();
+  const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
+  
+  if (totalItems === 0) return null;
+
+  // Calculate total price and build order text
+  let totalPrice = 0;
+  let orderLines = [];
+
+  Object.entries(cart).forEach(([key, qty]) => {
+    const item = data.items.find(i => (i.id || i.name) == key);
+    if (item) {
+      const price = parseFloat(item.precio || item.price || 0);
+      totalPrice += price * qty;
+      orderLines.push(`*${qty}x* ${item.nombre || item.name} _(Bs.${price * qty})_`);
+    }
+  });
+
+  const handleOrder = () => {
+    const phone = data.whatsapp || ''; // Assuming the restaurant phone is here
+    const message = encodeURIComponent(
+      `*NUEVO PEDIDO - ${data.name}*\n` +
+      `--------------------------\n` +
+      orderLines.join('\n') +
+      `\n--------------------------\n` +
+      `*TOTAL: Bs.${totalPrice}*\n\n` +
+      `Por favor, confírmenme el pedido. ¡Gracias!`
+    );
+    window.open(`https://wa.me/${phone.replace(/\+/g, '')}?text=${message}`, '_blank');
+  };
+
+  return (
+    <div className="sticky-bar animate-in" style={{ borderTop: 'none', background: 'transparent', pointerEvents: 'none' }}>
+      <div className="sticky-inner" style={{ pointerEvents: 'auto', background: 'var(--primary)', color: '#fff', borderRadius: 'var(--radius-pill)', padding: '12px 24px', boxShadow: '0 8px 32px rgba(0,0,0,0.3)', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <span style={{ fontSize: '12px', opacity: 0.8, fontWeight: 700 }}>{totalItems} platillos</span>
+          <span style={{ fontSize: '18px', fontWeight: 900 }}>Bs.{totalPrice}</span>
+        </div>
+        <button className="btn btn--whatsapp btn--sm" onClick={handleOrder} style={{ boxShadow: 'none', background: '#fff', color: '#1ebe5d', minWidth: '140px' }}>
+          Pedir WhatsApp
+        </button>
       </div>
     </div>
   );
