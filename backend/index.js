@@ -45,9 +45,18 @@ app.get('/', (req, res) => {
 });
 
 // --- Restaurantes ---
-app.get('/api/restaurantes', async (req, res) => {
+app.get('/api/restaurantes', authenticateToken, async (req, res) => {
   try {
-    const { rows } = await db.query('SELECT * FROM restaurantes ORDER BY nombre ASC');
+    let query = 'SELECT * FROM restaurantes ORDER BY nombre ASC';
+    let params = [];
+
+    // If not admin, only show their own restaurants
+    if (req.user.role_id !== 1) {
+      query = 'SELECT * FROM restaurantes WHERE user_id = ? ORDER BY nombre ASC';
+      params = [req.user.id];
+    }
+
+    const { rows } = await db.query(query, params);
     res.json(rows);
   } catch (err) {
     console.error(err);
@@ -73,15 +82,47 @@ app.get('/api/restaurantes/:slug', async (req, res) => {
 
 app.post('/api/restaurantes', authenticateToken, async (req, res) => {
   const { slug, nombre, whatsapp, whatsapp_opcional, tema, imagen_url } = req.body;
+  const user_id = req.user.id; // Assign to the logged-in user
+
   try {
     const { rows } = await db.query(
-      'INSERT INTO restaurantes (slug, nombre, whatsapp, whatsapp_opcional, tema, imagen_url) VALUES (?, ?, ?, ?, ?, ?)',
-      [slug, nombre, whatsapp, whatsapp_opcional, tema, imagen_url]
+      'INSERT INTO restaurantes (slug, nombre, whatsapp, whatsapp_opcional, tema, imagen_url, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [slug, nombre, whatsapp, whatsapp_opcional, tema, imagen_url, user_id]
     );
     res.status(201).json({ id: rows.insertId, slug, nombre });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error creating restaurante' });
+  }
+});
+
+app.post('/api/restaurantes/full', authenticateToken, async (req, res) => {
+  const { slug, nombre, whatsapp, whatsapp_opcional, tema, imagen_url, platillos } = req.body;
+  const user_id = req.user.id;
+
+  try {
+    // 1. Create restaurant
+    const { rows: restRows } = await db.query(
+      'INSERT INTO restaurantes (slug, nombre, whatsapp, whatsapp_opcional, tema, imagen_url, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [slug, nombre, whatsapp, whatsapp_opcional, tema, imagen_url, user_id]
+    );
+    const restaurante_id = restRows.insertId;
+
+    // 2. Create dishes
+    if (platillos && platillos.length > 0) {
+      for (let i = 0; i < platillos.length; i++) {
+        const { name, price, emoji } = platillos[i];
+        await db.query(
+          'INSERT INTO platillos (restaurante_id, nombre, precio, emoji, orden) VALUES (?, ?, ?, ?, ?)',
+          [restaurante_id, name, parseFloat(price || 0), emoji, i]
+        );
+      }
+    }
+
+    res.status(201).json({ id: restaurante_id, slug, nombre });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error creating full menu' });
   }
 });
 

@@ -8,13 +8,15 @@ import {
   formatPrice, 
   copyToClipboard 
 } from '../utils';
-import { ChevronUp, ChevronDown, Trash2, Plus, Utensils, Share2, Eye } from 'lucide-react';
+import { createFullMenu } from '../api';
+import { ChevronUp, ChevronDown, Trash2, Plus, Utensils, Share2, Eye, Save } from 'lucide-react';
 
 const LS_KEY = 'gustomenu_creator';
 
 const Creator = () => {
   const navigate = useNavigate();
-  const { showToast } = useApp();
+  const { showToast, user } = useApp();
+  const [isSaving, setIsSaving] = useState(false);
   
   const [bizInfo, setBizInfo] = useState({
     name: '',
@@ -158,6 +160,41 @@ const Creator = () => {
       linkSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
   };
+  const handleSaveToDashboard = async () => {
+    if (!bizInfo.name || dishes.length === 0) {
+      showToast('⚠️ Completa el nombre y añade platos');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const slug = bizInfo.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+      const validItems = dishes.filter(d => {
+        const hasName = d.type === 'completo' ? (d.soup || d.main) : d.name;
+        return hasName && parseFloat(d.price) >= 0;
+      }).map(d => {
+        if (d.type === 'completo') {
+          return { ...d, name: `Almuerzo Completo (${d.soup} + ${d.main})` };
+        }
+        return d;
+      });
+
+      await createFullMenu({
+        slug,
+        nombre: bizInfo.name,
+        whatsapp: (bizInfo.prefix + bizInfo.phone).replace(/\s/g,''),
+        tema: 'light',
+        platillos: validItems
+      });
+      showToast('✅ Menú guardado en tu panel');
+      navigate('/dashboard');
+    } catch (err) {
+      showToast('❌ ' + err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
 
   return (
     <div className="container animate-in" style={{ paddingBottom: '120px' }}>
@@ -368,6 +405,17 @@ const Creator = () => {
           <button className="btn btn--primary btn--full" onClick={() => window.open(generatedUrl, '_blank')}>
             <Eye size={20} /> Ver Menú Digital
           </button>
+
+          {user && (
+            <button 
+              className="btn btn--secondary btn--full" 
+              onClick={handleSaveToDashboard} 
+              disabled={isSaving}
+              style={{ marginTop: 'var(--space-sm)' }}
+            >
+              <Save size={20} /> {isSaving ? 'Guardando...' : 'Guardar en mi Panel'}
+            </button>
+          )}
         </div>
       )}
 

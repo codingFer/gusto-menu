@@ -17,12 +17,14 @@ CREATE TABLE users (
 
 CREATE TABLE restaurantes (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id BIGINT,
   slug VARCHAR(100) NOT NULL UNIQUE,
   nombre VARCHAR(200) NOT NULL,
   whatsapp VARCHAR(20) NOT NULL,
   whatsapp_opcional VARCHAR(20),
   tema VARCHAR(50),
-  imagen_url TEXT
+  imagen_url TEXT,
+  FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
 CREATE TABLE platillos (

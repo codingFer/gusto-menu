@@ -1,7 +1,6 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
 function getAuthHeader() {
-  const user = JSON.parse(localStorage.getItem('gustomenu_user') || '{}');
   const token = localStorage.getItem('gustomenu_token');
   return token ? { 'Authorization': `Bearer ${token}` } : {};
 }
@@ -15,9 +14,7 @@ export async function login(username, password) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Error al iniciar sesión');
   
-  // Store token
   if (data.token) localStorage.setItem('gustomenu_token', data.token);
-  
   return data;
 }
 
@@ -45,7 +42,9 @@ export async function getUsers() {
 }
 
 export async function getRestaurantes() {
-  const res = await fetch(`${API_URL}/restaurantes`);
+  const res = await fetch(`${API_URL}/restaurantes`, {
+    headers: getAuthHeader()
+  });
   if (!res.ok) throw new Error('Error al obtener restaurantes');
   return res.json();
 }
@@ -67,5 +66,19 @@ export async function createRestaurante(restData) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Error al crear restaurante');
+  return data;
+}
+
+export async function createFullMenu(menuData) {
+  const res = await fetch(`${API_URL}/restaurantes/full`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    },
+    body: JSON.stringify(menuData),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error al guardar el menú');
   return data;
 }
