@@ -5,10 +5,16 @@ import { formatPrice } from './utils';
 import { LayoutDashboard } from 'lucide-react';
 
 const Layout = ({ children }) => {
-  const { theme, toggleTheme, getCartTotal, currentMenuEncoded, toast, user } = useApp();
+  const { theme, toggleTheme, getCartTotal, currentMenuEncoded, toast, user, logoutUser, showToast } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
   const { count, total } = getCartTotal();
+
+  const handleLogout = () => {
+    logoutUser();
+    navigate('/');
+    showToast('Sesión cerrada');
+  };
 
   const isHome = location.pathname === '/';
   const isMenu = location.pathname === '/menu';
@@ -32,6 +38,11 @@ const Layout = ({ children }) => {
           {!user && isHome && (
             <button className="btn btn--ghost btn--sm" onClick={() => navigate('/login')}>
               Entrar
+            </button>
+          )}
+          {user && (
+            <button className="btn btn--ghost btn--sm" onClick={handleLogout} style={{ color: 'var(--error)' }}>
+              Cerrar Sesión
             </button>
           )}
           {isHome && (

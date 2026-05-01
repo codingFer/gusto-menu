@@ -7,7 +7,6 @@ import {
   Plus, 
   ExternalLink, 
   Settings, 
-  LogOut,
   UtensilsCrossed,
   Store,
   Users,
@@ -55,11 +54,6 @@ const Dashboard = () => {
     }
   };
 
-  const handleLogout = () => {
-    logoutUser();
-    navigate('/');
-    showToast('Sesión cerrada');
-  };
 
   if (!user) return null;
 
@@ -101,9 +95,6 @@ const Dashboard = () => {
               </button>
             </div>
           )}
-          <button className="btn btn--secondary btn--sm" onClick={handleLogout}>
-            <LogOut size={18} /> Salir
-          </button>
         </div>
       </div>
 
