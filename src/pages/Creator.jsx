@@ -192,7 +192,7 @@ const Creator = () => {
       ` 🌵 *${bizInfo.name}* 🦙 \n` +
       `*Menú día ${dateStr}*\n` +
       `Te ofrecemos:\n` +
-      buildSection('SOPAS', soups, false) +
+      buildSection('SOPAS', soups) +
       buildSection('SEGUNDOS', seconds) +
       buildSection('POSTRES', desserts) +
       buildSection('BEBIDAS', drinks) +
@@ -372,7 +372,7 @@ const Creator = () => {
                   value={d.name} 
                   onChange={(e) => updateDish(i, 'name', e.target.value)} 
                 />
-                {(d.type !== 'sopa' && d.type !== 'completo') && (
+                {d.type !== 'completo' && (
                   <div className="price-row">
                     <span className="price-symbol">Bs</span>
                     <input className="form-input price-input" type="number" placeholder="0.00" value={d.price} onChange={(e) => updateDish(i, 'price', e.target.value)} />
