@@ -22,31 +22,91 @@ CREATE TABLE restaurantes (
   nombre VARCHAR(200) NOT NULL,
   whatsapp VARCHAR(20) NOT NULL,
   whatsapp_opcional VARCHAR(20),
-  tema VARCHAR(50),
+  direccion TEXT,
+  tema VARCHAR(50) DEFAULT 'light',
   imagen_url TEXT,
   FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
-CREATE TABLE platillos (
+-- Tipos de Platillo (Sopa, Segundo, Postre, etc.)
+CREATE TABLE tipos_platillo (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  restaurante_id BIGINT,
-  nombre VARCHAR(200) NOT NULL,
-  precio DECIMAL(10, 2) NOT NULL,
-  emoji VARCHAR(10),
-  orden INT,
-  FOREIGN KEY (restaurante_id) REFERENCES restaurantes (id)
+  nombre VARCHAR(100) NOT NULL UNIQUE,
+  descripcion TEXT,
+  bloqueado BOOLEAN DEFAULT FALSE -- Si es TRUE, el admin no puede borrarlo
 );
 
-CREATE TABLE promociones (
+-- Platillos base (átomos del menú)
+CREATE TABLE platillos (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  platillo_id BIGINT,
-  nuevo_precio DECIMAL(10, 2),
+  restaurante_id BIGINT NOT NULL,
+  tipo_id BIGINT NOT NULL,
+  nombre VARCHAR(200) NOT NULL,
+  precio DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  emoji VARCHAR(10),
+  orden INT DEFAULT 0,
+  activo BOOLEAN DEFAULT TRUE,
+  FOREIGN KEY (restaurante_id) REFERENCES restaurantes(id) ON DELETE CASCADE,
+  FOREIGN KEY (tipo_id) REFERENCES tipos_platillo(id)
+);
+
+-- Entidad Combo (Almuerzos completos, packs, etc.)
+CREATE TABLE combos (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  restaurante_id BIGINT NOT NULL,
+  nombre VARCHAR(200) NOT NULL, -- Ej: "Almuerzo Ejecutivo"
+  precio DECIMAL(10, 2) NOT NULL,
   descripcion TEXT,
-  fecha_inicio DATETIME NOT NULL,
-  fecha_fin DATETIME NOT NULL,
-  dias_aplicacion JSON, -- MySQL uses JSON for arrays
-  FOREIGN KEY (platillo_id) REFERENCES platillos (id)
+  activo BOOLEAN DEFAULT TRUE,
+  FOREIGN KEY (restaurante_id) REFERENCES restaurantes(id) ON DELETE CASCADE
+);
+
+-- Secciones de un Combo (Ej: "Elija su Sopa", "Elija su Segundo")
+CREATE TABLE combo_secciones (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  combo_id BIGINT NOT NULL,
+  nombre VARCHAR(100) NOT NULL, -- Ej: "Sopa", "Segundo", "Refresco"
+  min_items INT DEFAULT 1,
+  max_items INT DEFAULT 1,
+  orden INT DEFAULT 0,
+  FOREIGN KEY (combo_id) REFERENCES combos(id) ON DELETE CASCADE
+);
+
+-- Relación entre Secciones y Platillos específicos
+CREATE TABLE combo_seccion_items (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  seccion_id BIGINT NOT NULL,
+  platillo_id BIGINT NOT NULL,
+  precio_adicional DECIMAL(10, 2) DEFAULT 0,
+  FOREIGN KEY (seccion_id) REFERENCES combo_secciones(id) ON DELETE CASCADE,
+  FOREIGN KEY (platillo_id) REFERENCES platillos(id) ON DELETE CASCADE
+);
+
+-- Catálogo de Guarniciones por restaurante
+CREATE TABLE guarniciones (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  restaurante_id BIGINT NOT NULL,
+  nombre VARCHAR(100) NOT NULL,
+  precio_extra DECIMAL(10, 2) DEFAULT 0,
+  FOREIGN KEY (restaurante_id) REFERENCES restaurantes(id) ON DELETE CASCADE
+);
+
+-- Relación entre Platillos y sus Guarniciones permitidas
+CREATE TABLE platillo_guarniciones (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  platillo_id BIGINT NOT NULL,
+  guarnicion_id BIGINT NOT NULL,
+  es_obligatorio BOOLEAN DEFAULT FALSE,
+  max_selecciones INT DEFAULT 1,
+  FOREIGN KEY (platillo_id) REFERENCES platillos(id) ON DELETE CASCADE,
+  FOREIGN KEY (guarnicion_id) REFERENCES guarniciones(id) ON DELETE CASCADE
 );
 
 -- Seed basic roles
 INSERT INTO roles (name) VALUES ('admin'), ('owner'), ('customer');
+-- Inserción de tipos por defecto bloqueados
+INSERT INTO tipos_platillo (nombre, descripcion, bloqueado) VALUES 
+('Sopa', 'Plato líquido servido al inicio', TRUE),
+('Segundo', 'Plato principal de la comida', TRUE),
+('Postre', 'Dulce servido al final', TRUE),
+('Bebida', 'Líquidos para acompañar', TRUE);

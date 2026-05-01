@@ -63,6 +63,12 @@ export async function getRestaurantes() {
   return res.json();
 }
 
+export async function getTiposPlatillo() {
+  const res = await fetch(`${API_URL}/tipos-platillo`);
+  if (!res.ok) throw new Error('Error al obtener tipos de platillo');
+  return res.json();
+}
+
 export async function getRestauranteBySlug(slug) {
   const res = await fetch(`${API_URL}/restaurantes/${slug}`);
   if (!res.ok) throw new Error('Restaurante no encontrado');

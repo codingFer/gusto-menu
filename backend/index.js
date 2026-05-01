@@ -163,7 +163,7 @@ app.put('/api/restaurantes/:id', authenticateToken, async (req, res) => {
 });
 
 app.post('/api/restaurantes/full', authenticateToken, async (req, res) => {
-  const { restaurante_id, items, name, theme, tagline, promo } = req.body;
+  const { restaurante_id, items, name, theme, tagline, promo, direccion, guarniciones } = req.body;
   const user_id = req.user.id;
   
   try {
@@ -176,19 +176,32 @@ app.post('/api/restaurantes/full', authenticateToken, async (req, res) => {
 
     // 2. Update restaurante metadata
     await db.query(
-      'UPDATE restaurantes SET nombre = ?, tema = ? WHERE id = ?',
-      [name, theme, restaurante_id]
+      'UPDATE restaurantes SET nombre = ?, tema = ?, direccion = ? WHERE id = ?',
+      [name, theme, direccion, restaurante_id]
     );
 
-    // 3. Clear existing dishes
+    // 3. Clear existing data
+    await db.query('DELETE FROM platillo_guarniciones WHERE platillo_id IN (SELECT id FROM platillos WHERE restaurante_id = ?)', [restaurante_id]);
     await db.query('DELETE FROM platillos WHERE restaurante_id = ?', [restaurante_id]);
+    await db.query('DELETE FROM guarniciones WHERE restaurante_id = ?', [restaurante_id]);
 
-    // 4. Insert new dishes
+    // 4. Insert Guarniciones
+    const guarnicionesArray = guarniciones ? guarniciones.split(',').map(s => s.trim()).filter(s => s) : [];
+    for (const gName of guarnicionesArray) {
+      await db.query('INSERT INTO guarniciones (restaurante_id, nombre) VALUES (?, ?)', [restaurante_id, gName]);
+    }
+
+    // 5. Insert Platillos with correct tipo_id
+    // Mapping: sopa -> 1, segundo -> 2, postre -> 3, bebida -> 4
+    const typeMap = { 'sopa': 1, 'segundo': 2, 'postre': 3, 'bebida': 4, 'standard': 2 };
+    
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
+      const tipoId = typeMap[item.type] || 2;
+      
       await db.query(
-        'INSERT INTO platillos (restaurante_id, nombre, precio, emoji, orden) VALUES (?, ?, ?, ?, ?)',
-        [restaurante_id, item.name, item.price, item.emoji, i]
+        'INSERT INTO platillos (restaurante_id, tipo_id, nombre, precio, emoji, orden) VALUES (?, ?, ?, ?, ?, ?)',
+        [restaurante_id, tipoId, item.name, item.price || 0, item.emoji, i]
       );
     }
 
@@ -200,7 +213,7 @@ app.post('/api/restaurantes/full', authenticateToken, async (req, res) => {
 });
 
 // --- Usuarios & Auth ---
-app.post('/api/register', authenticateToken, isAdmin, async (req, res) => {
+app.post('/api/register', async (req, res) => {
   const { username, password, email, role_id, restaurant_name, whatsapp } = req.body;
   try {
     // Hash the password
@@ -263,6 +276,16 @@ app.get('/api/users', authenticateToken, isAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error fetching users' });
+  }
+});
+
+app.get('/api/tipos-platillo', async (req, res) => {
+  try {
+    const { rows } = await db.query('SELECT * FROM tipos_platillo ORDER BY id ASC');
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error fetching types' });
   }
 });
 
