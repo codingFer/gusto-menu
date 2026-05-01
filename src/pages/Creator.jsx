@@ -185,11 +185,22 @@ const Creator = () => {
 
     const sidesLines = bizInfo.sides ? bizInfo.sides.split(',').map(s => `* ${s.trim()}`).join('\n') : '';
 
+    const emojiSets = [
+      '🥦🥕🫛🌽🧅😋',
+      '🥗🍱🥘🥣🥩🍗',
+      '🍎🥑🥒🌶️🌽🥔',
+      '👨‍🍳🔥🍽️✨🥘🍳',
+      '✨🤤👌🔥💯🍲'
+    ];
+    const deco1 = emojiSets[Math.floor(Math.random() * emojiSets.length)];
+    const deco2 = emojiSets[Math.floor(Math.random() * emojiSets.length)];
+    const randomGreet = ['😃👋', '✨😊', '🌟🙌', '🍳🔥'][Math.floor(Math.random() * 4)];
+
     const text = 
-      `BUENOS DIAS!  😃👋\n` +
+      `BUENOS DIAS!  ${randomGreet}\n` +
       `Estimados clientes!!!\n\n` +
       `Les enviamos nuestro menú del día \n` +
-      ` 🌵 *${bizInfo.name}* 🦙 \n` +
+      ` ✨ *${bizInfo.name}* ✨ \n` +
       `*Menú día ${dateStr}*\n` +
       `Te ofrecemos:\n` +
       buildSection('SOPAS', soups) +
@@ -197,9 +208,9 @@ const Creator = () => {
       buildSection('POSTRES', desserts) +
       buildSection('BEBIDAS', drinks) +
       (bizInfo.promo ? `\nESPECIAL DEL DIA:  *${bizInfo.promo}*\n` : '') +
-      `\n🥦🥕🫛🌽🧅😋\n` +
+      `\n${deco1}\n` +
       (bizInfo.sides ? `\n- *GUARNICION*\n${sidesLines}\n` : '') +
-      `\n🥦🥕🫛🍋🟩\n` +
+      `\n${deco2}\n` +
       `*${bizInfo.tagline}*!!!\n\n` +
       (bizInfo.phone ? `📱 *Pedidos al:* ${bizInfo.prefix}${bizInfo.phone}\n` : '') +
       (bizInfo.address ? `📍 *Dirección:* ${bizInfo.address}\n\n` : '') +
