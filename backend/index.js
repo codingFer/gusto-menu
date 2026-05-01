@@ -75,12 +75,23 @@ app.put('/api/users/:id', authenticateToken, isAdmin, async (req, res) => {
 // --- Restaurantes ---
 app.get('/api/restaurantes', authenticateToken, async (req, res) => {
   try {
-    let query = 'SELECT * FROM restaurantes ORDER BY nombre ASC';
+    let query = `
+      SELECT r.*, u.username as owner_name 
+      FROM restaurantes r 
+      LEFT JOIN users u ON r.user_id = u.id 
+      ORDER BY r.nombre ASC
+    `;
     let params = [];
 
     // If not admin, only show their own restaurants
     if (req.user.role_id !== 1) {
-      query = 'SELECT * FROM restaurantes WHERE user_id = ? ORDER BY nombre ASC';
+      query = `
+        SELECT r.*, u.username as owner_name 
+        FROM restaurantes r 
+        LEFT JOIN users u ON r.user_id = u.id 
+        WHERE r.user_id = ? 
+        ORDER BY r.nombre ASC
+      `;
       params = [req.user.id];
     }
 
@@ -88,7 +99,7 @@ app.get('/api/restaurantes', authenticateToken, async (req, res) => {
     res.json(rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Error fetching restaurants' });
   }
 });
 

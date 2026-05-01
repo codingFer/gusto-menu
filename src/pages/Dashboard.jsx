@@ -113,8 +113,8 @@ const Dashboard = () => {
         <RestaurantsView 
           restaurantes={restaurantes} 
           loading={loading} 
-          onAdd={() => navigate('/crear')} 
           onEdit={(res) => setEditingRes(res)}
+          isAdmin={user.role_id === 1}
         />
       ) : (
         <UsersView 
@@ -250,21 +250,14 @@ const UserEditModal = ({ targetUser, onClose, onSaved }) => {
   );
 };
 
-const RestaurantsView = ({ restaurantes, loading, onAdd, onEdit }) => (
+const RestaurantsView = ({ restaurantes, loading, onEdit, isAdmin }) => (
   <div className="menu-grid">
-    <div 
-      className="card" 
-      style={{ 
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
-        border: '2px dashed var(--outline-variant)', background: 'transparent', cursor: 'pointer', minHeight: '200px'
-      }}
-      onClick={onAdd}
-    >
-      <div style={{ background: 'var(--primary-container)', color: 'var(--primary)', padding: '16px', borderRadius: '50%', marginBottom: '16px' }}>
-        <Plus size={32} />
+    {!loading && restaurantes.length === 0 && (
+      <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 'var(--space-2xl)', opacity: 0.7 }}>
+        <Store size={48} style={{ margin: '0 auto var(--space-md)', display: 'block' }} />
+        <p>No hay restaurantes asociados a esta cuenta.</p>
       </div>
-      <span style={{ fontWeight: 700 }}>Crear Nuevo Restaurante</span>
-    </div>
+    )}
 
     {!loading && restaurantes.map(res => (
       <div key={res.id} className="card animate-in" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', position: 'relative' }}>
@@ -283,7 +276,14 @@ const RestaurantsView = ({ restaurantes, loading, onAdd, onEdit }) => (
           </div>
           <div style={{ overflow: 'hidden', paddingRight: '32px' }}>
             <h3 style={{ fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{res.nombre}</h3>
-            <span style={{ fontSize: '13px', color: 'var(--on-surface-variant)' }}>/{res.slug}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '13px', color: 'var(--on-surface-variant)' }}>/{res.slug}</span>
+              {isAdmin && (
+                <span className="badge" style={{ fontSize: '10px', background: 'var(--primary-container)', color: 'var(--primary)', padding: '2px 6px' }}>
+                  <Users size={10} style={{ marginRight: '4px' }} /> {res.owner_name}
+                </span>
+              )}
+            </div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'auto' }}>
