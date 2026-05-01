@@ -7,10 +7,11 @@ import { getRestauranteById } from '../api';
 const MenuView = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { showToast } = useApp();
+  const { showToast, cart } = useApp();
   
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
+  const [step, setStep] = useState(1); // 1: Menú, 2: Carrito
 
   const dParam = searchParams.get('d');
 
@@ -31,7 +32,8 @@ const MenuView = () => {
             promo: res.promo,
             theme: res.tema || 'light',
             items: res.platillos || [],
-            whatsapp: res.whatsapp
+            whatsapp: res.whatsapp,
+            menuPrice: res.precio_menu
           });
         } else {
           const decoded = decodeMenu(dParam);
@@ -63,69 +65,269 @@ const MenuView = () => {
     );
   }
 
+  const hasItemsInCart = Object.keys(cart).length > 0;
+
   return (
-    <div className="container animate-in" style={{ paddingBottom: '100px' }}>
-      {/* Hero */}
-      <div className="menu-hero">
-        <h1>{data.name}</h1>
-        {data.tagline && <div className="tagline">{data.tagline}</div>}
-        <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-          <span className="badge badge--open">● ABIERTO</span>
-          <span className="badge badge--time" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff' }}>⏱ 15-25 min</span>
+    <div className="container animate-in" style={{ paddingBottom: '120px', paddingTop: '20px' }}>
+      {/* Workflow Stepper */}
+      <div className="stepper-container animate-in">
+        <div className={`step-pill ${step === 1 ? 'active' : 'completed'}`} onClick={() => setStep(1)}>
+          <span className="step-num">{step > 1 ? '✓' : '1'}</span>
+          <span className="step-label">Menú</span>
+        </div>
+        <div className="step-line"></div>
+        <div className={`step-pill ${step === 2 ? 'active' : ''}`} onClick={() => hasItemsInCart && setStep(2)}>
+          <span className="step-num">2</span>
+          <span className="step-label">Carrito</span>
+        </div>
+        <div className="step-line"></div>
+        <div className="step-pill">
+          <span className="step-num">3</span>
+          <span className="step-label">Pedido</span>
         </div>
       </div>
-      
-      {/* Especial del día (Promo) */}
-      {data.promo && (
-        <div className="promo-card animate-in">
-          <div className="promo-badge">RECOMENDADO</div>
-          <div className="promo-emoji">⭐</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '14px', fontWeight: 700, opacity: 0.8, textTransform: 'uppercase' }}>Especial del Día</div>
-            <div style={{ fontSize: '20px', fontWeight: 800 }}>{data.promo}</div>
+
+      {step === 1 ? (
+        <div className="animate-in">
+          {/* Hero */}
+          <div className="menu-hero">
+            <h1>{data.name}</h1>
+            {data.tagline && <div className="tagline">{data.tagline}</div>}
+            <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+              <span className="badge badge--open">● ABIERTO</span>
+              <span className="badge badge--time" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff' }}>⏱ 15-25 min</span>
+            </div>
           </div>
+          
+          {/* Especial del día (Promo) */}
+          {data.promo && (
+            <div className="promo-card animate-in">
+              <div className="promo-badge">RECOMENDADO</div>
+              <div className="promo-emoji">⭐</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '14px', fontWeight: 700, opacity: 0.8, textTransform: 'uppercase' }}>Especial del Día</div>
+                <div style={{ fontSize: '20px', fontWeight: 800 }}>{data.promo}</div>
+              </div>
+            </div>
+          )}
+
+          {/* Combo / Menú Completo Section */}
+          {data.menuPrice > 0 && (
+            <ComboBuilder data={data} />
+          )}
+
+          {['sopa', 'segundo', 'segundo suelto', 'postre', 'bebida'].map(type => {
+            const sectionItems = data.items.filter(item => (item.tipo || item.type || '').toLowerCase() === type);
+            if (sectionItems.length === 0) return null;
+
+            return (
+              <div key={type} style={{ marginBottom: '40px' }}>
+                <div className="menu-section-title">
+                  {type === 'sopa' && '🥣 Sopas'}
+                  {type === 'segundo' && '🍽️ Segundos'}
+                  {type === 'segundo suelto' && '🍱 Segundos Sueltos'}
+                  {type === 'postre' && '🍰 Postres'}
+                  {type === 'bebida' && '🥤 Bebidas'}
+                </div>
+                <div className="menu-grid">
+                  {sectionItems.map((item, i) => (
+                    <div key={i} className="menu-card animate-in" style={{ animationDelay: `${(i * 0.05)}s` }}>
+                      <div style={{ display: 'flex', gap: '12px' }}>
+                        <div className="menu-card-emoji">{item.emoji}</div>
+                        <div style={{ flex: 1 }}>
+                          <div className="menu-card-name">{item.nombre || item.name}</div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                        <div className="menu-card-price">{formatPrice(item.precio || item.price)}</div>
+                        <ItemControl itemKey={item.id || item.name} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="animate-in">
+          <OrderReviewView data={data} onBack={() => setStep(1)} />
         </div>
       )}
 
-      {/* Combo / Menú Completo Section */}
-      {data.menuPrice > 0 && (
-        <ComboBuilder data={data} />
-      )}
+      {step === 1 && <CheckoutBar data={data} onReview={() => setStep(2)} />}
+    </div>
+  );
+};
 
-      {['sopa', 'segundo', 'segundo suelto', 'postre', 'bebida'].map(type => {
-        const sectionItems = data.items.filter(item => (item.tipo || item.type || '').toLowerCase() === type);
-        if (sectionItems.length === 0) return null;
+const OrderReviewView = ({ data, onBack }) => {
+  const { cart } = useApp();
+  const cartEntries = Object.entries(cart);
+  
+  let totalPrice = 0;
+  cartEntries.forEach(([key, cartItem]) => {
+    let price = 0;
+    if (key.startsWith('combo-')) {
+      price = parseFloat(cartItem.price || 0);
+    } else {
+      const item = data.items.find(i => (i.id || i.name) == key);
+      if (item) price = parseFloat(item.precio || item.price || 0);
+    }
+    totalPrice += price * cartItem.qty;
+  });
 
-        return (
-          <div key={type} style={{ marginBottom: '40px' }}>
-            <div className="menu-section-title">
-              {type === 'sopa' && '🥣 Sopas'}
-              {type === 'segundo' && '🍽️ Segundos'}
-              {type === 'segundo suelto' && '🍱 Segundos Sueltos'}
-              {type === 'postre' && '🍰 Postres'}
-              {type === 'bebida' && '🥤 Bebidas'}
-            </div>
-            <div className="menu-grid">
-              {sectionItems.map((item, i) => (
-                <div key={i} className="menu-card animate-in" style={{ animationDelay: `${(i * 0.05)}s` }}>
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    <div className="menu-card-emoji">{item.emoji}</div>
-                    <div style={{ flex: 1 }}>
-                      <div className="menu-card-name">{item.nombre || item.name}</div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
-                    <div className="menu-card-price">{formatPrice(item.precio || item.price)}</div>
-                    <ItemControl item={item} />
-                  </div>
-                </div>
-              ))}
-            </div>
+  const handleFinalOrder = () => {
+    let orderLines = [];
+    cartEntries.forEach(([key, cartItem]) => {
+      let name = '';
+      let price = 0;
+      if (key.startsWith('combo-')) {
+        name = cartItem.name;
+        price = parseFloat(cartItem.price || 0);
+      } else {
+        const item = data.items.find(i => (i.id || i.name) == key);
+        if (item) {
+          name = item.nombre || item.name;
+          price = parseFloat(item.precio || item.price || 0);
+        }
+      }
+      if (name) {
+        orderLines.push(`*${cartItem.qty}x* ${name} _(Bs.${(price * cartItem.qty).toFixed(1)})_`);
+      }
+    });
+
+    const phone = data.whatsapp || '';
+    const message = encodeURIComponent(
+      `*NUEVO PEDIDO - ${data.name}*\n` +
+      `--------------------------\n` +
+      orderLines.join('\n') +
+      `\n--------------------------\n` +
+      `*TOTAL: Bs.${totalPrice.toFixed(1)}*\n\n` +
+      `Por favor, confírmenme el pedido. ¡Gracias!`
+    );
+    window.open(`https://wa.me/${phone.replace(/\+/g, '')}?text=${message}`, '_blank');
+  };
+
+  if (cartEntries.length === 0) {
+    return (
+      <div className="empty-state">
+        <div className="empty-icon">🛒</div>
+        <div className="empty-title">Tu carrito está vacío</div>
+        <button className="btn btn--primary btn--pill" onClick={onBack}>Volver al Menú</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="animate-in" style={{ padding: '0 4px' }}>
+      <h2 style={{ fontSize: '24px', fontWeight: 900, marginBottom: '24px' }}>Resumen de tu Pedido</h2>
+      
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
+        {cartEntries.map(([key, cartItem]) => (
+          <CartItem key={key} itemKey={key} cartItem={cartItem} data={data} />
+        ))}
+      </div>
+
+      <div className="section-card" style={{ background: 'var(--surface-container-low)', padding: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '22px', fontWeight: 900, marginBottom: '24px' }}>
+          <span>Monto Total</span>
+          <span style={{ color: 'var(--primary)' }}>Bs.{totalPrice.toFixed(1)}</span>
+        </div>
+        
+        <button className="btn btn--primary btn--full btn--pill" onClick={handleFinalOrder} style={{ height: '60px', fontSize: '18px' }}>
+          Confirmar y Pedir por WhatsApp
+        </button>
+        <button className="btn btn--ghost btn--full" onClick={onBack} style={{ marginTop: '12px' }}>
+          ← Seguir añadiendo platos
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const CartItem = ({ itemKey, cartItem, data }) => {
+  const { removeFromCart, addToCart, showToast } = useApp();
+  const [isEditing, setIsEditing] = useState(false);
+  
+  const isCombo = itemKey.startsWith('combo-');
+  let name = cartItem.name;
+  let price = 0;
+  let emoji = isCombo ? '🍱' : '🍴';
+
+  if (!isCombo) {
+    const item = data.items.find(i => (i.id || i.name) == itemKey);
+    if (item) {
+      name = item.nombre || item.name;
+      price = parseFloat(item.precio || item.price || 0);
+      emoji = item.emoji || '🍴';
+    }
+  } else {
+    price = parseFloat(cartItem.price || 0);
+  }
+
+  // Edit logic for combo
+  const soups = data.items.filter(i => (i.tipo || i.type || '').toLowerCase() === 'sopa');
+  const seconds = data.items.filter(i => (i.tipo || i.type || '').toLowerCase() === 'segundo');
+
+  const handleUpdateCombo = (newSopa, newSegundo) => {
+    const newName = `Completo: ${newSopa} + ${newSegundo}`;
+    const newKey = `combo-${newSopa}-${newSegundo}`;
+    
+    if (newKey === itemKey) {
+      setIsEditing(false);
+      return;
+    }
+
+    // Individual unit update:
+    // This allows splitting a qty of 2+ into different combinations
+    removeFromCart(itemKey); 
+    addToCart(newKey, { name: newName, price: cartItem.price });
+    
+    setIsEditing(false);
+    showToast('🔄 Se actualizó 1 unidad');
+  };
+
+  return (
+    <div style={{ background: 'var(--card-bg)', padding: '16px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--outline-variant)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div style={{ fontSize: '32px' }}>{emoji}</div>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: '15px' }}>{name}</div>
+            <div style={{ fontSize: '13px', opacity: 0.7 }}>{formatPrice(price)} c/u</div>
           </div>
-        );
-      })}
+        </div>
+        <ItemControl itemKey={itemKey} />
+      </div>
 
-      <CheckoutBar data={data} />
+      {isCombo && (
+        <div style={{ borderTop: '1px solid var(--outline-variant)', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {isEditing ? (
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <select className="form-input" style={{ fontSize: '12px', padding: '4px 8px' }} defaultValue={name.split(': ')[1]?.split(' + ')[0]} id={`edit-sopa-${itemKey}`}>
+                  {soups.map((s, i) => <option key={i} value={s.nombre || s.name}>{s.nombre || s.name}</option>)}
+                </select>
+                <select className="form-input" style={{ fontSize: '12px', padding: '4px 8px' }} defaultValue={name.split(' + ')[1]} id={`edit-segundo-${itemKey}`}>
+                  {seconds.map((s, i) => <option key={i} value={s.nombre || s.name}>{s.nombre || s.name}</option>)}
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn btn--primary btn--sm" style={{ flex: 1 }} onClick={() => {
+                  const s = document.getElementById(`edit-sopa-${itemKey}`).value;
+                  const sg = document.getElementById(`edit-segundo-${itemKey}`).value;
+                  handleUpdateCombo(s, sg);
+                }}>Guardar</button>
+                <button className="btn btn--ghost btn--sm" onClick={() => setIsEditing(false)}>Cancelar</button>
+              </div>
+            </div>
+          ) : (
+            <button className="btn btn--ghost btn--sm" style={{ fontSize: '11px', height: '28px' }} onClick={() => setIsEditing(true)}>
+              ✏️ Cambiar sopa o segundo
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -139,10 +341,10 @@ const ComboBuilder = ({ data }) => {
   const [selSegundo, setSelSegundo] = useState(seconds[0]?.nombre || seconds[0]?.name || '');
 
   const handleAdd = () => {
-    const comboName = `Menú Completo: ${selSopa} + ${selSegundo}`;
+    const comboName = `Completo: ${selSopa} + ${selSegundo}`;
     const comboId = `combo-${selSopa}-${selSegundo}`;
     addToCart(comboId, { name: comboName, price: data.menuPrice });
-    showToast('✨ Combo añadido al carrito');
+    showToast('✨ Combo añadido');
   };
 
   return (
@@ -154,26 +356,26 @@ const ComboBuilder = ({ data }) => {
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <div className="form-group">
-          <label className="form-label" style={{ color: 'var(--primary)' }}>Selecciona tu Sopa</label>
+          <label className="form-label" style={{ color: 'var(--primary)' }}>Sopa</label>
           <select className="form-input" value={selSopa} onChange={(e) => setSelSopa(e.target.value)}>
             {soups.map((s, i) => <option key={i} value={s.nombre || s.name}>{s.nombre || s.name}</option>)}
           </select>
         </div>
         <div className="form-group">
-          <label className="form-label" style={{ color: 'var(--primary)' }}>Selecciona tu Segundo</label>
+          <label className="form-label" style={{ color: 'var(--primary)' }}>Segundo</label>
           <select className="form-input" value={selSegundo} onChange={(e) => setSelSegundo(e.target.value)}>
             {seconds.map((s, i) => <option key={i} value={s.nombre || s.name}>{s.nombre || s.name}</option>)}
           </select>
         </div>
-        <button className="btn btn--primary btn--full" onClick={handleAdd} style={{ marginTop: '8px' }}>
-          Añadir Menú Completo
+        <button className="btn btn--primary btn--full" onClick={handleAdd}>
+          Añadir al Pedido
         </button>
       </div>
     </div>
   );
 };
 
-const CheckoutBar = ({ data }) => {
+const CheckoutBar = ({ data, onReview }) => {
   const { cart } = useApp();
   const cartEntries = Object.entries(cart);
   const totalItems = cartEntries.reduce((acc, [_, item]) => acc + item.qty, 0);
@@ -181,41 +383,16 @@ const CheckoutBar = ({ data }) => {
   if (totalItems === 0) return null;
 
   let totalPrice = 0;
-  let orderLines = [];
-
   cartEntries.forEach(([key, cartItem]) => {
-    let name = '';
     let price = 0;
-
     if (key.startsWith('combo-')) {
-      name = cartItem.name;
       price = parseFloat(cartItem.price || 0);
     } else {
       const item = data.items.find(i => (i.id || i.name) == key);
-      if (item) {
-        name = item.nombre || item.name;
-        price = parseFloat(item.precio || item.price || 0);
-      }
+      if (item) price = parseFloat(item.precio || item.price || 0);
     }
-
-    if (name) {
-      totalPrice += price * cartItem.qty;
-      orderLines.push(`*${cartItem.qty}x* ${name} _(Bs.${(price * cartItem.qty).toFixed(1)})_`);
-    }
+    totalPrice += price * cartItem.qty;
   });
-
-  const handleOrder = () => {
-    const phone = data.whatsapp || '';
-    const message = encodeURIComponent(
-      `*NUEVO PEDIDO - ${data.name}*\n` +
-      `--------------------------\n` +
-      orderLines.join('\n') +
-      `\n--------------------------\n` +
-      `*TOTAL: Bs.${totalPrice.toFixed(1)}*\n\n` +
-      `Por favor, confírmenme el pedido. ¡Gracias!`
-    );
-    window.open(`https://wa.me/${phone.replace(/\+/g, '')}?text=${message}`, '_blank');
-  };
 
   return (
     <div className="sticky-bar animate-in" style={{ borderTop: 'none', background: 'transparent', pointerEvents: 'none' }}>
@@ -224,17 +401,16 @@ const CheckoutBar = ({ data }) => {
           <span style={{ fontSize: '12px', opacity: 0.8, fontWeight: 700 }}>{totalItems} platillos</span>
           <span style={{ fontSize: '18px', fontWeight: 900 }}>Bs.{totalPrice.toFixed(1)}</span>
         </div>
-        <button className="btn btn--whatsapp btn--sm" onClick={handleOrder} style={{ boxShadow: 'none', background: '#fff', color: '#1ebe5d', minWidth: '140px' }}>
-          Pedir WhatsApp
+        <button className="btn btn--whatsapp btn--sm" onClick={onReview} style={{ boxShadow: 'none', background: '#fff', color: 'var(--primary)', minWidth: '140px' }}>
+          Ver Pedido
         </button>
       </div>
     </div>
   );
 };
 
-const ItemControl = ({ item }) => {
+const ItemControl = ({ itemKey }) => {
   const { cart, addToCart, removeFromCart } = useApp();
-  const itemKey = item.id || item.name;
   const qty = cart[itemKey]?.qty || 0;
 
   if (qty === 0) {
