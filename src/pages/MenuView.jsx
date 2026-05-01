@@ -87,24 +87,38 @@ const MenuView = () => {
         </div>
       )}
 
-      <div className="menu-section-title">Nuestros Clásicos</div>
-      <div className="menu-grid">
-        {data.items.map((item, i) => (
-          <div key={i} className="menu-card animate-in" style={{ animationDelay: `${(i * 0.05)}s` }}>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <div className="menu-card-emoji">{item.emoji}</div>
-              <div style={{ flex: 1 }}>
-                <div className="menu-card-name">{item.nombre || item.name}</div>
-                {(item.tipo || item.type) && <div style={{ fontSize: '10px', color: 'var(--primary)', fontWeight: 800, textTransform: 'uppercase' }}>{item.tipo || item.type}</div>}
-              </div>
+      {['sopa', 'segundo', 'segundo suelto', 'postre', 'bebida'].map(type => {
+        const sectionItems = data.items.filter(item => (item.tipo || item.type || '').toLowerCase() === type);
+        if (sectionItems.length === 0) return null;
+
+        return (
+          <div key={type} style={{ marginBottom: '40px' }}>
+            <div className="menu-section-title">
+              {type === 'sopa' && '🥣 Sopas'}
+              {type === 'segundo' && '🍽️ Segundos'}
+              {type === 'segundo suelto' && '🍱 Segundos Sueltos'}
+              {type === 'postre' && '🍰 Postres'}
+              {type === 'bebida' && '🥤 Bebidas'}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
-              <div className="menu-card-price">{formatPrice(item.precio || item.price)}</div>
-              <ItemControl item={item} />
+            <div className="menu-grid">
+              {sectionItems.map((item, i) => (
+                <div key={i} className="menu-card animate-in" style={{ animationDelay: `${(i * 0.05)}s` }}>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <div className="menu-card-emoji">{item.emoji}</div>
+                    <div style={{ flex: 1 }}>
+                      <div className="menu-card-name">{item.nombre || item.name}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                    <div className="menu-card-price">{formatPrice(item.precio || item.price)}</div>
+                    <ItemControl item={item} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        ))}
-      </div>
+        );
+      })}
 
       <CheckoutBar data={data} />
     </div>
