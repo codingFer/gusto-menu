@@ -27,6 +27,7 @@ export const AppProvider = ({ children }) => {
   const logoutUser = () => {
     setUser(null);
     localStorage.removeItem('gustomenu_user');
+    localStorage.removeItem('gustomenu_token');
   };
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');

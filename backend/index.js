@@ -4,16 +4,40 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const db = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'gustomenu_secret_key_123';
 
 // Middleware
 app.use(helmet());
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
+
+// --- Auth Middleware ---
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) return res.status(401).json({ error: 'Access denied. No token provided.' });
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: 'Invalid token.' });
+    req.user = user;
+    next();
+  });
+};
+
+const isAdmin = (req, res, next) => {
+  if (req.user && req.user.role_id === 1) {
+    next();
+  } else {
+    res.status(403).json({ error: 'Access denied. Admin only.' });
+  }
+};
 
 // Routes
 app.get('/', (req, res) => {
@@ -47,7 +71,7 @@ app.get('/api/restaurantes/:slug', async (req, res) => {
   }
 });
 
-app.post('/api/restaurantes', async (req, res) => {
+app.post('/api/restaurantes', authenticateToken, async (req, res) => {
   const { slug, nombre, whatsapp, whatsapp_opcional, tema, imagen_url } = req.body;
   try {
     const { rows } = await db.query(
@@ -62,7 +86,7 @@ app.post('/api/restaurantes', async (req, res) => {
 });
 
 // --- Platillos ---
-app.post('/api/platillos', async (req, res) => {
+app.post('/api/platillos', authenticateToken, async (req, res) => {
   const { restaurante_id, nombre, precio, emoji, orden } = req.body;
   try {
     const { rows } = await db.query(
@@ -77,7 +101,7 @@ app.post('/api/platillos', async (req, res) => {
 });
 
 // --- Usuarios & Auth ---
-app.post('/api/register', async (req, res) => {
+app.post('/api/register', authenticateToken, isAdmin, async (req, res) => {
   const { username, password, email, role_id } = req.body;
   try {
     // Hash the password
@@ -105,14 +129,32 @@ app.post('/api/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
 
-    // In a real app, generate a JWT here
+    // Generate JWT
+    const token = jwt.sign(
+      { id: user.id, username: user.username, role_id: user.role_id },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
     res.json({ 
       message: 'Login successful', 
+      token,
       user: { id: user.id, username: user.username, role_id: user.role_id } 
     });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Login error' });
+  }
+});
+
+// --- Users List (Admin Only) ---
+app.get('/api/users', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const { rows } = await db.query('SELECT id, username, email, role_id, created_at FROM users');
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error fetching users' });
   }
 });
 
