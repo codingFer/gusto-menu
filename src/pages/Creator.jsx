@@ -268,11 +268,55 @@ const Creator = () => {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Dirección</label>
-            <div style={{ position: 'relative' }}>
-              <MapPin size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }} />
-              <input className="form-input" id="biz-address" style={{ paddingLeft: '36px' }} placeholder="Ubicación del local" value={bizInfo.address} onChange={handleBizChange} />
+            <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              Link de Ubicación (Google Maps)
+              <button 
+                type="button" 
+                onClick={() => window.open('https://www.google.com/maps', '_blank')}
+                style={{ fontSize: '11px', color: 'var(--primary)', border: '1px solid var(--primary)', padding: '2px 8px', borderRadius: '4px', background: 'none', cursor: 'pointer' }}
+              >
+                🔍 Buscar en Maps
+              </button>
+            </label>
+            <div style={{ position: 'relative', display: 'flex', gap: '8px' }}>
+              <div style={{ position: 'relative', flex: 1 }}>
+                <MapPin size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }} />
+                <input 
+                  className="form-input" 
+                  id="biz-address" 
+                  style={{ paddingLeft: '36px' }} 
+                  placeholder="Pega el link de Google Maps aquí" 
+                  value={bizInfo.address} 
+                  onChange={handleBizChange} 
+                />
+              </div>
+              <button 
+                type="button"
+                className="btn btn--secondary btn--icon" 
+                title="Usar mi ubicación GPS actual"
+                onClick={() => {
+                  if (navigator.geolocation) {
+                    showToast('🛰️ Obteniendo GPS...');
+                    navigator.geolocation.getCurrentPosition(
+                      (pos) => {
+                        const { latitude, longitude } = pos.coords;
+                        const mapsUrl = `https://maps.google.com/maps?q=loc:${latitude},${longitude}`;
+                        setBizInfo(prev => ({ ...prev, address: mapsUrl }));
+                        showToast('📍 Link de ubicación generado');
+                      },
+                      (err) => {
+                        showToast('❌ Error: ' + err.message);
+                      }
+                    );
+                  } else {
+                    showToast('❌ GPS no soportado');
+                  }
+                }}
+              >
+                <MapPin size={20} />
+              </button>
             </div>
+            <span className="form-hint">Puedes usar el botón 🛰️ o pegar el link compartido desde Google Maps.</span>
           </div>
 
           <div className="form-group">
