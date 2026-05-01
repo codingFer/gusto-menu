@@ -9,11 +9,25 @@ export const AppProvider = ({ children }) => {
   const [menuData, setMenuData] = useState(null);
   const [currentMenuEncoded, setCurrentMenuEncoded] = useState(null);
   const [toast, setToast] = useState(null);
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem('gustomenu_user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('gustomenu_theme', theme);
   }, [theme]);
+
+  const loginUser = (userData) => {
+    setUser(userData);
+    localStorage.setItem('gustomenu_user', JSON.stringify(userData));
+  };
+
+  const logoutUser = () => {
+    setUser(null);
+    localStorage.removeItem('gustomenu_user');
+  };
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
@@ -59,7 +73,8 @@ export const AppProvider = ({ children }) => {
       cart, setCart, addToCart, removeFromCart, clearCart, getCartTotal,
       menuData, setMenuData,
       currentMenuEncoded, setCurrentMenuEncoded,
-      toast, showToast
+      toast, showToast,
+      user, loginUser, logoutUser
     }}>
       {children}
     </AppContext.Provider>

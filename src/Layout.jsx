@@ -2,16 +2,17 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from './context/AppContext';
 import { formatPrice } from './utils';
+import { LayoutDashboard } from 'lucide-react';
 
 const Layout = ({ children }) => {
-  const { theme, toggleTheme, getCartTotal, currentMenuEncoded, toast } = useApp();
+  const { theme, toggleTheme, getCartTotal, currentMenuEncoded, toast, user } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
   const { count, total } = getCartTotal();
 
   const isHome = location.pathname === '/';
   const isMenu = location.pathname === '/menu';
-  const isCheckout = location.pathname === '/checkout';
+  const isDashboard = location.pathname === '/dashboard';
 
   const showSticky = (isMenu && count > 0);
 
@@ -23,6 +24,16 @@ const Layout = ({ children }) => {
           <span className="brand-name">GustoMenu</span>
         </Link>
         <div className="navbar-actions">
+          {user && !isDashboard && (
+            <button className="btn btn--secondary btn--sm" onClick={() => navigate('/dashboard')}>
+              <LayoutDashboard size={18} /> Panel
+            </button>
+          )}
+          {!user && isHome && (
+            <button className="btn btn--ghost btn--sm" onClick={() => navigate('/login')}>
+              Entrar
+            </button>
+          )}
           {isHome && (
             <button className="btn btn--primary btn--sm" onClick={() => navigate('/crear')}>
               + Crear Menú

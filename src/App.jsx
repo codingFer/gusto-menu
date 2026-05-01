@@ -6,6 +6,8 @@ import Home from './pages/Home';
 import Creator from './pages/Creator';
 import MenuView from './pages/MenuView';
 import Checkout from './pages/Checkout';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
 
 function App() {
   return (
@@ -17,6 +19,8 @@ function App() {
             <Route path="/crear" element={<Creator />} />
             <Route path="/menu" element={<MenuView />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="*" element={<Home />} />
           </Routes>
         </Layout>
