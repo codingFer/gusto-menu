@@ -275,6 +275,14 @@ const Creator = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const removeFromHistory = (e, id) => {
+    e.stopPropagation();
+    const newHistory = history.filter(h => h.id !== id);
+    setHistory(newHistory);
+    localStorage.setItem('gustomenu_history', JSON.stringify(newHistory));
+    showToast('🗑️ Eliminado del historial');
+  };
+
   const handleSaveToDashboard = async () => {
     if (!myRestauranteId) {
       showToast('⚠️ No tienes un restaurante asignado');
@@ -569,13 +577,23 @@ const Creator = () => {
                 border: '1px solid var(--outline-variant)',
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center'
+                alignItems: 'center',
+                gap: '12px'
               }}>
-                <div>
+                <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 800, fontSize: '14px' }}>{entry.bizInfo.name}</div>
                   <div style={{ fontSize: '12px', opacity: 0.6 }}>{entry.date} · {entry.dishes.length} platos</div>
                 </div>
-                <div style={{ color: 'var(--primary)' }}><Eye size={16} /></div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ color: 'var(--primary)', padding: '4px' }}><Eye size={16} /></div>
+                  <div 
+                    className="history-delete-btn" 
+                    onClick={(e) => removeFromHistory(e, entry.id)}
+                    style={{ color: 'var(--error)', padding: '4px' }}
+                  >
+                    <Trash2 size={16} />
+                  </div>
+                </div>
               </div>
             ))}
           </div>
