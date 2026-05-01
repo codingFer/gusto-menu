@@ -201,8 +201,9 @@ const Creator = () => {
       (bizInfo.sides ? `\n- *GUARNICION*\n${sidesLines}\n` : '') +
       `\n🥦🥕🫛🍋🟩\n` +
       `*${bizInfo.tagline}*!!!\n\n` +
-      (bizInfo.address ? `Dirección: ${bizInfo.address}\n\n` : '') +
-      `👇 *Ver menú con fotos y pedir aquí:*\n` +
+      (bizInfo.phone ? `📱 *Pedidos al:* ${bizInfo.prefix}${bizInfo.phone}\n` : '') +
+      (bizInfo.address ? `📍 *Dirección:* ${bizInfo.address}\n\n` : '') +
+      `👇 *Ver menú y pedir aquí:*\n` +
       `${url}`;
     
     setShareText(text);
@@ -252,6 +253,16 @@ const Creator = () => {
           <div className="form-group">
             <label className="form-label">Nombre del restaurante</label>
             <input className="form-input" id="biz-name" type="text" placeholder="ej. Alter NATIVA" value={bizInfo.name} onChange={handleBizChange} />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">WhatsApp de Pedidos</label>
+            <div className="phone-row">
+              <div className="phone-prefix">{bizInfo.prefix}</div>
+              <div className="phone-input-wrap">
+                <input className="form-input" id="biz-phone" type="tel" placeholder="Número de celular" value={bizInfo.phone} onChange={handleBizChange} />
+              </div>
+            </div>
           </div>
           
           <div className="form-group">
