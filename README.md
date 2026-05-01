@@ -19,9 +19,11 @@
 
 ## 🛠️ Tecnologías Utilizadas
 
-- **HTML5 & CSS3**: Estilizado con variables CSS modernas para un diseño premium y flexible.
-- **Vanilla JavaScript**: Arquitectura SPA (Single Page Application) basada en hash-routing.
-- **Web Storage API**: Persistencia local del borrador del menú para no perder cambios.
+- **React & Vite**: Framework frontend moderno para una experiencia de usuario fluida y reactiva.
+- **Framer Motion**: Animaciones premium y transiciones suaves.
+- **React Router**: Navegación SPA basada en rutas.
+- **CSS3 Variables**: Sistema de diseño dinámico con soporte para temas.
+- **Web Storage API**: Persistencia local del borrador del menú.
 - **Base64 Encoding**: Los datos del menú se transmiten íntegramente a través de la URL.
 
 ---
@@ -30,11 +32,13 @@
 
 ```text
 gusto-menu/
-├── index.html     # Punto de entrada y contenedor del SPA
-├── css/
-│   └── style.css  # Sistema de diseño, temas y componentes
-└── js/
-    └── app.js     # Lógica de ruteo, estado, renderizado y persistencia
+├── src/            # Código fuente React
+│   ├── context/    # Estado global (Cart, Theme)
+│   ├── pages/      # Vistas de la aplicación
+│   ├── App.jsx     # Enrutador principal
+│   └── main.jsx    # Punto de entrada React
+├── public/         # Activos estáticos
+└── backend/        # Servidor Express/Node.js
 ```
 
 ---
@@ -55,13 +59,20 @@ Actualmente, GustoMenu opera de forma descentralizada ("Serverless/Backend-less"
 
 ---
 
-## 💻 Instalación Local
+## 🚀 Instalación y Desarrollo
 
-1. Clona el repositorio:
+1. Instala las dependencias:
    ```bash
-   git clone https://github.com/codingFer/gusto-menu.git
+   npm install
    ```
-2. Abre `index.html` en cualquier navegador moderno. No requiere compilación.
+2. Inicia el servidor de desarrollo:
+   ```bash
+   npm run dev
+   ```
+3. Para construir la versión de producción:
+   ```bash
+   npm run build
+   ```
 
 ---
 

@@ -1,0 +1,71 @@
+import React from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useApp } from './context/AppContext';
+import { formatPrice } from './utils';
+
+const Layout = ({ children }) => {
+  const { theme, toggleTheme, getCartTotal, currentMenuEncoded, toast } = useApp();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { count, total } = getCartTotal();
+
+  const isHome = location.pathname === '/';
+  const isMenu = location.pathname === '/menu';
+  const isCheckout = location.pathname === '/checkout';
+
+  const showSticky = (isMenu && count > 0);
+
+  return (
+    <>
+      <nav className="navbar">
+        <Link to="/" className="navbar-brand">
+          <span className="brand-icon">🍽️</span>
+          <span className="brand-name">GustoMenu</span>
+        </Link>
+        <div className="navbar-actions">
+          {isHome && (
+            <button className="btn btn--primary btn--sm" onClick={() => navigate('/crear')}>
+              + Crear Menú
+            </button>
+          )}
+          <button 
+            className="btn btn--icon" 
+            onClick={toggleTheme}
+            aria-label="Cambiar tema"
+            style={{ fontSize: '20px' }}
+          >
+            {theme === 'light' ? '☀️' : '🌙'}
+          </button>
+        </div>
+      </nav>
+
+      <main>{children}</main>
+
+      {showSticky && (
+        <div className="sticky-bar">
+          <div className="sticky-inner">
+            <div className="sticky-summary">
+              <span className="sticky-label">Resumen del pedido</span>
+              <span className="sticky-amount">{count} item{count !== 1 ? 's' : ''} · {formatPrice(total)}</span>
+            </div>
+            <button 
+              className="btn btn--whatsapp btn--pill" 
+              onClick={() => navigate(`/checkout?d=${currentMenuEncoded}`)}
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              ▶ Pedir por WhatsApp
+            </button>
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className="toast animate-in">
+          <span>{toast}</span>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default Layout;
