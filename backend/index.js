@@ -44,6 +44,34 @@ app.get('/', (req, res) => {
   res.json({ message: 'GustoMenu API is running 🚀' });
 });
 
+// --- Update User (Admin Only) ---
+app.put('/api/users/:id', authenticateToken, isAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { username, email, role_id, password } = req.body;
+  
+  try {
+    let query = 'UPDATE users SET username = ?, email = ?, role_id = ?';
+    let params = [username, email, role_id];
+
+    // If password is provided, hash it and update
+    if (password && password.trim() !== '') {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+      query += ', password = ?';
+      params.push(hashedPassword);
+    }
+
+    query += ' WHERE id = ?';
+    params.push(id);
+
+    await db.query(query, params);
+    res.json({ message: 'User updated successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error updating user' });
+  }
+});
+
 // --- Restaurantes ---
 app.get('/api/restaurantes', authenticateToken, async (req, res) => {
   try {

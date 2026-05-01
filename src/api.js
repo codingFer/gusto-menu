@@ -41,6 +41,20 @@ export async function getUsers() {
   return data;
 }
 
+export async function updateUser(id, userData) {
+  const res = await fetch(`${API_URL}/users/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    },
+    body: JSON.stringify(userData),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error al actualizar usuario');
+  return data;
+}
+
 export async function getRestaurantes() {
   const res = await fetch(`${API_URL}/restaurantes`, {
     headers: getAuthHeader()

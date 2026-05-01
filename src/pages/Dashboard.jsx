@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { getRestaurantes, getUsers, register, updateRestaurante } from '../api';
+import { getRestaurantes, getUsers, register, updateRestaurante, updateUser } from '../api';
 import { 
   LayoutDashboard, 
   Plus, 
@@ -15,7 +15,9 @@ import {
   UserPlus,
   ArrowLeft,
   Save,
-  X
+  X,
+  Edit2,
+  KeyRound
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -27,6 +29,7 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('menus'); // 'menus' | 'users'
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [editingRes, setEditingRes] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
 
   useEffect(() => {
     if (!user) {
@@ -54,17 +57,25 @@ const Dashboard = () => {
     }
   };
 
-
   if (!user) return null;
 
   return (
     <div className="container animate-in container--wide">
-      {/* Edit Modal */}
+      {/* Edit Restaurant Modal */}
       {editingRes && (
         <EditModal 
           res={editingRes} 
           onClose={() => setEditingRes(null)} 
           onSaved={() => { setEditingRes(null); fetchData(); }} 
+        />
+      )}
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <UserEditModal 
+          targetUser={editingUser} 
+          onClose={() => setEditingUser(null)} 
+          onSaved={() => { setEditingUser(null); fetchData(); }} 
         />
       )}
 
@@ -112,6 +123,7 @@ const Dashboard = () => {
           showCreate={showCreateUser}
           setShowCreate={setShowCreateUser}
           onUserCreated={fetchData}
+          onEditUser={(u) => setEditingUser(u)}
         />
       )}
     </div>
@@ -138,14 +150,11 @@ const EditModal = ({ res, onClose, onSaved }) => {
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-md)' }}>
-      <div className="section-card animate-in" style={{ maxWidth: '500px', width: '100%', position: 'relative', margin: 0 }}>
-        <button onClick={onClose} style={{ position: 'absolute', top: '16px', right: '16px', background: 'transparent', color: 'var(--on-surface-variant)' }}>
-          <X size={24} />
-        </button>
+    <div className="modal-overlay">
+      <div className="section-card animate-in modal-content">
+        <button className="modal-close" onClick={onClose}><X size={24} /></button>
         <h2 style={{ marginBottom: 'var(--space-xl)', fontWeight: 800 }}>Editar Negocio</h2>
-        
-        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
+        <form onSubmit={handleSave} className="modal-form">
           <div className="form-group">
             <label className="form-label">Nombre del Negocio</label>
             <input className="form-input" value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} required />
@@ -158,11 +167,81 @@ const EditModal = ({ res, onClose, onSaved }) => {
             <label className="form-label">Slug (URL)</label>
             <input className="form-input" value={formData.slug} onChange={e => setFormData({...formData, slug: e.target.value})} required />
           </div>
-          
-          <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-md)' }}>
+          <div className="modal-actions">
             <button type="button" className="btn btn--ghost btn--full" onClick={onClose}>Cancelar</button>
             <button type="submit" className="btn btn--primary btn--full" disabled={isSaving}>
               {isSaving ? 'Guardando...' : <><Save size={18} /> Guardar</>}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const UserEditModal = ({ targetUser, onClose, onSaved }) => {
+  const { showToast } = useApp();
+  const [formData, setFormData] = useState({ 
+    username: targetUser.username, 
+    email: targetUser.email, 
+    role_id: targetUser.role_id,
+    password: '' 
+  });
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      await updateUser(targetUser.id, formData);
+      showToast('✅ Usuario actualizado');
+      onSaved();
+    } catch (err) {
+      showToast('❌ ' + err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="section-card animate-in modal-content">
+        <button className="modal-close" onClick={onClose}><X size={24} /></button>
+        <h2 style={{ marginBottom: 'var(--space-xl)', fontWeight: 800 }}>Editar Usuario</h2>
+        <form onSubmit={handleSave} className="modal-form">
+          <div className="form-group">
+            <label className="form-label">Nombre de Usuario</label>
+            <input className="form-input" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} required />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Email</label>
+            <input className="form-input" type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Rol</label>
+            <select className="form-input" value={formData.role_id} onChange={e => setFormData({...formData, role_id: parseInt(e.target.value)})}>
+              <option value="2">Owner (Restaurante)</option>
+              <option value="1">Admin (Sistema)</option>
+            </select>
+          </div>
+          
+          <div style={{ borderTop: '1px solid var(--outline-variant)', paddingTop: 'var(--space-md)', marginTop: 'var(--space-md)' }}>
+            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary)' }}>
+              <KeyRound size={16} /> Reiniciar Contraseña
+            </label>
+            <input 
+              className="form-input" 
+              type="password" 
+              placeholder="Nueva contraseña (dejar vacío para no cambiar)" 
+              value={formData.password} 
+              onChange={e => setFormData({...formData, password: e.target.value})} 
+            />
+          </div>
+
+          <div className="modal-actions">
+            <button type="button" className="btn btn--ghost btn--full" onClick={onClose}>Cancelar</button>
+            <button type="submit" className="btn btn--primary btn--full" disabled={isSaving}>
+              {isSaving ? 'Actualizar' : <><Save size={18} /> Guardar Cambios</>}
             </button>
           </div>
         </form>
@@ -189,7 +268,6 @@ const MenusView = ({ restaurantes, loading, onAdd, onEdit }) => (
 
     {!loading && restaurantes.map(res => (
       <div key={res.id} className="card animate-in" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', position: 'relative' }}>
-        {/* Settings button - top right */}
         <button 
           className="btn btn--icon btn--sm" 
           style={{ position: 'absolute', top: '12px', right: '12px', width: '32px', height: '32px' }}
@@ -218,7 +296,7 @@ const MenusView = ({ restaurantes, loading, onAdd, onEdit }) => (
   </div>
 );
 
-const UsersView = ({ users, loading, showCreate, setShowCreate, onUserCreated }) => {
+const UsersView = ({ users, loading, showCreate, setShowCreate, onUserCreated, onEditUser }) => {
   const { showToast } = useApp();
   const [newUser, setNewUser] = useState({ 
     username: '', 
@@ -320,6 +398,7 @@ const UsersView = ({ users, loading, showCreate, setShowCreate, onUserCreated })
               <th>Email</th>
               <th>Rol</th>
               <th>Fecha</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -334,6 +413,11 @@ const UsersView = ({ users, loading, showCreate, setShowCreate, onUserCreated })
                   </span>
                 </td>
                 <td style={{ fontSize: '12px', opacity: 0.6 }}>{new Date(u.created_at).toLocaleDateString()}</td>
+                <td>
+                  <button className="btn btn--ghost btn--sm" onClick={() => onEditUser(u)}>
+                    <Edit2 size={16} /> Editar
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
