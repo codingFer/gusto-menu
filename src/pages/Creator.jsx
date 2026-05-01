@@ -172,6 +172,9 @@ const Creator = () => {
       promo: bizInfo.promo.trim(),
       address: bizInfo.address.trim(),
       sides: bizInfo.sides.trim(),
+      phone: bizInfo.phone.trim(),
+      whatsapp: bizInfo.prefix + bizInfo.phone.trim(),
+      menuPrice: bizInfo.menuPrice,
       items: validItems
     };
 

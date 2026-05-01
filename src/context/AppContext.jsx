@@ -50,17 +50,24 @@ export const AppProvider = ({ children }) => {
     return { count, total };
   };
 
-  const addToCart = (idx) => {
-    setCart(prev => ({ ...prev, [idx]: (prev[idx] || 0) + 1 }));
+  const addToCart = (id, customData = null) => {
+    setCart(prev => {
+      const existing = prev[id];
+      if (existing) {
+        return { ...prev, [id]: { ...existing, qty: existing.qty + 1 } };
+      }
+      return { ...prev, [id]: { qty: 1, ...(customData || {}) } };
+    });
   };
 
-  const removeFromCart = (idx) => {
+  const removeFromCart = (id) => {
     setCart(prev => {
       const newCart = { ...prev };
-      if (newCart[idx] > 1) {
-        newCart[idx] -= 1;
+      if (!newCart[id]) return prev;
+      if (newCart[id].qty > 1) {
+        newCart[id] = { ...newCart[id], qty: newCart[id].qty - 1 };
       } else {
-        delete newCart[idx];
+        delete newCart[id];
       }
       return newCart;
     });

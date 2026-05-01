@@ -87,6 +87,11 @@ const MenuView = () => {
         </div>
       )}
 
+      {/* Combo / Menú Completo Section */}
+      {data.menuPrice > 0 && (
+        <ComboBuilder data={data} />
+      )}
+
       {['sopa', 'segundo', 'segundo suelto', 'postre', 'bebida'].map(type => {
         const sectionItems = data.items.filter(item => (item.tipo || item.type || '').toLowerCase() === type);
         if (sectionItems.length === 0) return null;
@@ -125,33 +130,88 @@ const MenuView = () => {
   );
 };
 
+const ComboBuilder = ({ data }) => {
+  const { addToCart, showToast } = useApp();
+  const soups = data.items.filter(i => (i.tipo || i.type || '').toLowerCase() === 'sopa');
+  const seconds = data.items.filter(i => (i.tipo || i.type || '').toLowerCase() === 'segundo');
+
+  const [selSopa, setSelSopa] = useState(soups[0]?.nombre || soups[0]?.name || '');
+  const [selSegundo, setSelSegundo] = useState(seconds[0]?.nombre || seconds[0]?.name || '');
+
+  const handleAdd = () => {
+    const comboName = `Menú Completo: ${selSopa} + ${selSegundo}`;
+    const comboId = `combo-${selSopa}-${selSegundo}`;
+    addToCart(comboId, { name: comboName, price: data.menuPrice });
+    showToast('✨ Combo añadido al carrito');
+  };
+
+  return (
+    <div className="section-card animate-in" style={{ background: 'var(--primary-container)', border: '2px solid var(--primary)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--primary)' }}>🍱 Menú Completo</div>
+        <div style={{ fontSize: '22px', fontWeight: 900, color: 'var(--primary)' }}>Bs.{data.menuPrice}</div>
+      </div>
+      
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="form-group">
+          <label className="form-label" style={{ color: 'var(--primary)' }}>Selecciona tu Sopa</label>
+          <select className="form-input" value={selSopa} onChange={(e) => setSelSopa(e.target.value)}>
+            {soups.map((s, i) => <option key={i} value={s.nombre || s.name}>{s.nombre || s.name}</option>)}
+          </select>
+        </div>
+        <div className="form-group">
+          <label className="form-label" style={{ color: 'var(--primary)' }}>Selecciona tu Segundo</label>
+          <select className="form-input" value={selSegundo} onChange={(e) => setSelSegundo(e.target.value)}>
+            {seconds.map((s, i) => <option key={i} value={s.nombre || s.name}>{s.nombre || s.name}</option>)}
+          </select>
+        </div>
+        <button className="btn btn--primary btn--full" onClick={handleAdd} style={{ marginTop: '8px' }}>
+          Añadir Menú Completo
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const CheckoutBar = ({ data }) => {
   const { cart } = useApp();
-  const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
+  const cartEntries = Object.entries(cart);
+  const totalItems = cartEntries.reduce((acc, [_, item]) => acc + item.qty, 0);
   
   if (totalItems === 0) return null;
 
-  // Calculate total price and build order text
   let totalPrice = 0;
   let orderLines = [];
 
-  Object.entries(cart).forEach(([key, qty]) => {
-    const item = data.items.find(i => (i.id || i.name) == key);
-    if (item) {
-      const price = parseFloat(item.precio || item.price || 0);
-      totalPrice += price * qty;
-      orderLines.push(`*${qty}x* ${item.nombre || item.name} _(Bs.${price * qty})_`);
+  cartEntries.forEach(([key, cartItem]) => {
+    let name = '';
+    let price = 0;
+
+    if (key.startsWith('combo-')) {
+      name = cartItem.name;
+      price = parseFloat(cartItem.price || 0);
+    } else {
+      const item = data.items.find(i => (i.id || i.name) == key);
+      if (item) {
+        name = item.nombre || item.name;
+        price = parseFloat(item.precio || item.price || 0);
+      }
+    }
+
+    if (name) {
+      totalPrice += price * cartItem.qty;
+      orderLines.push(`*${cartItem.qty}x* ${name} _(Bs.${(price * cartItem.qty).toFixed(1)})_`);
     }
   });
 
   const handleOrder = () => {
-    const phone = data.whatsapp || ''; // Assuming the restaurant phone is here
+    const phone = data.whatsapp || '';
     const message = encodeURIComponent(
       `*NUEVO PEDIDO - ${data.name}*\n` +
       `--------------------------\n` +
       orderLines.join('\n') +
       `\n--------------------------\n` +
-      `*TOTAL: Bs.${totalPrice}*\n\n` +
+      `*TOTAL: Bs.${totalPrice.toFixed(1)}*\n\n` +
       `Por favor, confírmenme el pedido. ¡Gracias!`
     );
     window.open(`https://wa.me/${phone.replace(/\+/g, '')}?text=${message}`, '_blank');
@@ -162,7 +222,7 @@ const CheckoutBar = ({ data }) => {
       <div className="sticky-inner" style={{ pointerEvents: 'auto', background: 'var(--primary)', color: '#fff', borderRadius: 'var(--radius-pill)', padding: '12px 24px', boxShadow: '0 8px 32px rgba(0,0,0,0.3)', marginBottom: '16px' }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span style={{ fontSize: '12px', opacity: 0.8, fontWeight: 700 }}>{totalItems} platillos</span>
-          <span style={{ fontSize: '18px', fontWeight: 900 }}>Bs.{totalPrice}</span>
+          <span style={{ fontSize: '18px', fontWeight: 900 }}>Bs.{totalPrice.toFixed(1)}</span>
         </div>
         <button className="btn btn--whatsapp btn--sm" onClick={handleOrder} style={{ boxShadow: 'none', background: '#fff', color: '#1ebe5d', minWidth: '140px' }}>
           Pedir WhatsApp
@@ -175,7 +235,7 @@ const CheckoutBar = ({ data }) => {
 const ItemControl = ({ item }) => {
   const { cart, addToCart, removeFromCart } = useApp();
   const itemKey = item.id || item.name;
-  const qty = cart[itemKey] || 0;
+  const qty = cart[itemKey]?.qty || 0;
 
   if (qty === 0) {
     return <button className="add-btn" onClick={() => addToCart(itemKey)} aria-label="Agregar">+</button>;
