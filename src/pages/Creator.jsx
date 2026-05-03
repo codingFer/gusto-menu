@@ -36,18 +36,36 @@ const Creator = () => {
   const [myRestauranteId, setMyRestauranteId] = useState(null);
   const [tipos, setTipos] = useState([]);
   
-  const [bizInfo, setBizInfo] = useState({
-    name: '',
-    prefix: '+591',
-    phone: '',
-    tagline: 'Comida casera con calidad y sabor inigualable.',
-    promo: '',
-    address: '',
-    sides: '',
-    menuPrice: ''
+  const [bizInfo, setBizInfo] = useState(() => {
+    try {
+      const saved = localStorage.getItem(LS_KEY);
+      if (saved) {
+        const data = JSON.parse(saved);
+        return {
+          name: data.name || '',
+          prefix: '+591',
+          phone: data.phone || '',
+          tagline: data.tagline || 'Comida casera con calidad y sabor inigualable.',
+          promo: data.promo || '',
+          address: data.address || '',
+          sides: data.sides || '',
+          menuPrice: data.menuPrice || ''
+        };
+      }
+    } catch (e) { console.error(e); }
+    return { name: '', prefix: '+591', phone: '', tagline: 'Comida casera con calidad y sabor inigualable.', promo: '', address: '', sides: '', menuPrice: '' };
   });
   
-  const [dishes, setDishes] = useState([]);
+  const [dishes, setDishes] = useState(() => {
+    try {
+      const saved = localStorage.getItem(LS_KEY);
+      if (saved) {
+        const data = JSON.parse(saved);
+        return data.dishes || [];
+      }
+    } catch (e) { console.error(e); }
+    return [];
+  });
   const [openEmojiIdx, setOpenEmojiIdx] = useState(null);
   const [generatedUrl, setGeneratedUrl] = useState('');
   const [shareText, setShareText] = useState('');
@@ -71,23 +89,6 @@ const Creator = () => {
         setTipos(typesData);
       } catch (e) { console.error('Failed to fetch types', e); }
 
-      // Load draft from localStorage
-      try {
-        const saved = localStorage.getItem(LS_KEY);
-        if (saved) {
-          const data = JSON.parse(saved);
-          setBizInfo(prev => ({
-            ...prev,
-            name: data.name || '',
-            phone: data.phone || '',
-            tagline: data.tagline || prev.tagline,
-            promo: data.promo || '',
-            address: data.address || '',
-            sides: data.sides || ''
-          }));
-          if (data.dishes) setDishes(data.dishes);
-        }
-      } catch (e) { console.error(e); }
     }
     init();
   }, [user]);
