@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { decodeMenu, formatPrice } from '../utils';
 import { getRestauranteById } from '../api';
+import { Plus, Minus } from 'lucide-react';
 
 const MenuView = () => {
   const [searchParams] = useSearchParams();
@@ -416,14 +417,14 @@ const ItemControl = ({ itemKey }) => {
   const qty = cart[itemKey]?.qty || 0;
 
   if (qty === 0) {
-    return <button className="add-btn" onClick={() => addToCart(itemKey)} aria-label="Agregar">+</button>;
+    return <button className="add-btn" onClick={() => addToCart(itemKey)} aria-label="Agregar"><Plus size={20} /></button>;
   }
 
   return (
     <div className="qty-controls">
-      <button className="qty-btn" onClick={() => removeFromCart(itemKey)}>−</button>
+      <button className="qty-btn" onClick={() => removeFromCart(itemKey)}><Minus size={16} /></button>
       <span className="qty-num">{qty}</span>
-      <button className="qty-btn" onClick={() => addToCart(itemKey)} style={{ background: 'var(--primary)', color: '#fff' }}>+</button>
+      <button className="qty-btn" onClick={() => addToCart(itemKey)} style={{ background: 'var(--primary)', color: '#fff' }}><Plus size={16} /></button>
     </div>
   );
 };
