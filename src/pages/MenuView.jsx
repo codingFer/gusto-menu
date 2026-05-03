@@ -68,6 +68,7 @@ const MenuView = () => {
   const hasItemsInCart = Object.keys(cart).length > 0;
 
   return (
+    <>
     <div className="container animate-in" style={{ paddingBottom: '120px', paddingTop: '20px' }}>
       {/* Workflow Stepper */}
       <div className="stepper-container animate-in">
@@ -155,8 +156,9 @@ const MenuView = () => {
         </div>
       )}
 
-      {step === 1 && <CheckoutBar data={data} onReview={() => setStep(2)} />}
     </div>
+    {step === 1 && <CheckoutBar data={data} onReview={() => setStep(2)} />}
+    </>
   );
 };
 
@@ -395,8 +397,8 @@ const CheckoutBar = ({ data, onReview }) => {
   });
 
   return (
-    <div className="sticky-bar animate-in" style={{ borderTop: 'none', background: 'transparent', pointerEvents: 'none' }}>
-      <div className="sticky-inner" style={{ pointerEvents: 'auto', background: 'var(--primary)', color: '#fff', borderRadius: 'var(--radius-pill)', padding: '12px 24px', boxShadow: '0 8px 32px rgba(0,0,0,0.3)', marginBottom: '16px' }}>
+    <div className="sticky-bar animate-in" style={{ padding: 0, borderTop: 'none', background: 'transparent', pointerEvents: 'none' }}>
+      <div className="sticky-inner" style={{ pointerEvents: 'auto', background: 'var(--primary)', color: '#fff', borderRadius: 0, padding: '16px 24px', boxShadow: '0 -4px 20px rgba(0,0,0,0.3)', maxWidth: '100%', margin: 0, width: '100%' }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span style={{ fontSize: '12px', opacity: 0.8, fontWeight: 700 }}>{totalItems} platillos</span>
           <span style={{ fontSize: '18px', fontWeight: 900 }}>Bs.{totalPrice.toFixed(1)}</span>

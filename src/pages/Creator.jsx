@@ -332,7 +332,7 @@ const Creator = () => {
 
   return (
     <>
-    <div className="container animate-in" style={{ paddingBottom: '120px' }}>
+    <div className="container animate-in">
       <div className="creator-header">
         <h1>Crea tu Menú de Hoy</h1>
         <p>Configura tu menú completo y compártelo al instante.</p>
