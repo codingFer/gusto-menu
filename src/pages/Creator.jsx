@@ -170,6 +170,7 @@ const Creator = () => {
 
   const handleGenerate = () => {
     if (!bizInfo.name.trim()) { showToast('⚠️ Ingresa el nombre del negocio'); return; }
+    if (!bizInfo.phone.trim()) { showToast('⚠️ Ingresa tu número de WhatsApp'); return; }
 
     const hasSoup = dishes.some(d => d.type === 'sopa');
     const hasSecond = dishes.some(d => d.type === 'segundo');
