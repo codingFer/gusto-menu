@@ -63,6 +63,18 @@ const Layout = ({ children }) => {
 
       <main>{children}</main>
 
+      <footer style={{ textAlign: 'center', padding: '24px 16px', marginTop: 'auto', fontSize: '13px', color: 'var(--on-surface-variant)', opacity: 0.8 }}>
+        Desarrollado con ❤️ por{' '}
+        <a 
+          href="https://codingfer.com" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          style={{ color: 'var(--primary)', fontWeight: 800, textDecoration: 'none' }}
+        >
+          @codingFer
+        </a>
+      </footer>
+
       {showSticky && (
         <div className="sticky-bar">
           <div className="sticky-inner">
