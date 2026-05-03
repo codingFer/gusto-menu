@@ -22,7 +22,8 @@ import {
   Soup, 
   Salad, 
   Coffee, 
-  IceCream 
+  IceCream,
+  X 
 } from 'lucide-react';
 
 const LS_KEY = 'gustomenu_creator';
@@ -49,8 +50,8 @@ const Creator = () => {
   const [openEmojiIdx, setOpenEmojiIdx] = useState(null);
   const [generatedUrl, setGeneratedUrl] = useState('');
   const [shareText, setShareText] = useState('');
+  const [showModal, setShowModal] = useState(false);
   
-  const linkSectionRef = useRef(null);
 
   useEffect(() => {
     async function init() {
@@ -93,6 +94,16 @@ const Creator = () => {
     const data = { ...bizInfo, dishes };
     localStorage.setItem(LS_KEY, JSON.stringify(data));
   }, [bizInfo, dishes]);
+
+  // Prevent background scroll when modal is open
+  useEffect(() => {
+    if (showModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => { document.body.style.overflow = 'auto'; };
+  }, [showModal]);
 
   const handleBizChange = (e) => {
     const { id, value } = e.target;
@@ -242,9 +253,7 @@ const Creator = () => {
       `${url}`;
     
     setShareText(text);
-    setTimeout(() => {
-      linkSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
+    setShowModal(true);
   };
 
   const [history, setHistory] = useState(() => {
@@ -320,6 +329,7 @@ const Creator = () => {
   };
 
   return (
+    <>
     <div className="container animate-in" style={{ paddingBottom: '120px' }}>
       <div className="creator-header">
         <h1>Crea tu Menú de Hoy</h1>
@@ -542,27 +552,6 @@ const Creator = () => {
         </div>
       </div>
 
-      {/* Results */}
-      {generatedUrl && (
-        <div className="section-card animate-in" ref={linkSectionRef}>
-          <div className="section-title">🔗 Mensaje de WhatsApp Listo</div>
-          <div className="share-text-box" style={{ whiteSpace: 'pre-wrap', fontSize: '13px', maxHeight: '300px', overflowY: 'auto', background: 'var(--surface-container-low)', padding: '16px', borderRadius: 'var(--radius)' }}>{shareText}</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', marginTop: 'var(--space-md)' }}>
-            <button className="btn btn--primary btn--full" onClick={() => { copyToClipboard(shareText); showToast('✅ Mensaje copiado'); }}>
-              <Share2 size={18} /> Copiar para WhatsApp
-            </button>
-            <button className="btn btn--ghost btn--full" onClick={saveToHistory}>
-              <Save size={18} /> Guardar en Mi Historial Local
-            </button>
-            {user && (
-              <button className="btn btn--secondary btn--full" onClick={handleSaveToDashboard} disabled={isSaving}>
-                <Save size={18} /> {isSaving ? 'Guardando...' : 'Publicar en mi Menú Web'}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* History Section */}
       {history.length > 0 && (
         <div className="section-card">
@@ -609,6 +598,53 @@ const Creator = () => {
         </div>
       </div>
     </div>
+
+    {/* Results Modal - Outside the animated container to avoid fixed positioning issues */}
+    {showModal && (
+      <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        <div className="section-card animate-in modal-content" onClick={e => e.stopPropagation()}>
+          <button className="modal-close" onClick={() => setShowModal(false)}><X size={24} /></button>
+          <div className="section-title">🔗 Menú del Día Generado</div>
+          <p style={{ fontSize: '14px', marginBottom: '16px', opacity: 0.8 }}>Tu mensaje de WhatsApp está listo para ser compartido.</p>
+          
+          <div className="share-text-box" style={{ 
+            whiteSpace: 'pre-wrap', 
+            fontSize: '13px', 
+            maxHeight: '250px', 
+            overflowY: 'auto', 
+            background: 'var(--surface-container-low)', 
+            padding: '16px', 
+            borderRadius: 'var(--radius)',
+            border: '1px solid var(--outline-variant)',
+            marginBottom: '20px'
+          }}>
+            {shareText}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+            <button className="btn btn--primary btn--full" onClick={() => { copyToClipboard(shareText); showToast('✅ Mensaje copiado'); }}>
+              <Share2 size={18} /> Copiar para WhatsApp
+            </button>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <button className="btn btn--ghost btn--full btn--sm" onClick={saveToHistory}>
+                <Save size={16} /> Guardar Local
+              </button>
+              {user && (
+                <button className="btn btn--secondary btn--full btn--sm" onClick={handleSaveToDashboard} disabled={isSaving}>
+                  <Save size={16} /> {isSaving ? 'Publicando...' : 'Publicar Web'}
+                </button>
+              )}
+            </div>
+            
+            <button className="btn btn--ghost btn--full" style={{ marginTop: '10px', border: 'none' }} onClick={() => setShowModal(false)}>
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 
