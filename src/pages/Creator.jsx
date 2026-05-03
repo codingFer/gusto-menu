@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { 
@@ -23,7 +23,8 @@ import {
   Salad, 
   Coffee, 
   IceCream,
-  X 
+  X,
+  Settings
 } from 'lucide-react';
 
 const LS_KEY = 'gustomenu_creator';
@@ -51,6 +52,7 @@ const Creator = () => {
   const [generatedUrl, setGeneratedUrl] = useState('');
   const [shareText, setShareText] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showExtrasModal, setShowExtrasModal] = useState(false);
   
 
   useEffect(() => {
@@ -95,9 +97,9 @@ const Creator = () => {
     localStorage.setItem(LS_KEY, JSON.stringify(data));
   }, [bizInfo, dishes]);
 
-  // Prevent background scroll when modal is open
+  // Prevent background scroll when modals are open
   useEffect(() => {
-    if (showModal) {
+    if (showModal || showExtrasModal) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'auto';
@@ -355,11 +357,6 @@ const Creator = () => {
             </div>
           </div>
           
-          <div className="form-group">
-            <label className="form-label">Especial del día (opcional)</label>
-            <input className="form-input" id="biz-promo" placeholder="ej. Pollo al horno 17Bs" value={bizInfo.promo} onChange={handleBizChange} />
-          </div>
-
           {(dishes.some(d => d.type === 'sopa') && dishes.some(d => d.type === 'segundo')) && (
             <div className="form-group animate-in" style={{ background: 'var(--primary-container)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--primary)' }}>
               <label className="form-label" style={{ color: 'var(--on-primary-container)', fontWeight: 800 }}>💰 Precio Almuerzo Completo (Sopa + Segundo)</label>
@@ -371,70 +368,20 @@ const Creator = () => {
             </div>
           )}
 
-          <div className="form-group">
-            <label className="form-label">Guarniciones (opcional)</label>
-            <div style={{ position: 'relative' }}>
-              <Salad size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }} />
-              <input className="form-input" id="biz-sides" style={{ paddingLeft: '36px' }} placeholder="ej. Arroz blanco, Arroz curry" value={bizInfo.sides} onChange={handleBizChange} />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              Link de Ubicación (Google Maps)
-              <button 
-                type="button" 
-                onClick={() => window.open('https://www.google.com/maps', '_blank')}
-                style={{ fontSize: '11px', color: 'var(--primary)', border: '1px solid var(--primary)', padding: '2px 8px', borderRadius: '4px', background: 'none', cursor: 'pointer' }}
-              >
-                🔍 Buscar en Maps
-              </button>
-            </label>
-            <div style={{ position: 'relative', display: 'flex', gap: '8px' }}>
-              <div style={{ position: 'relative', flex: 1 }}>
-                <MapPin size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }} />
-                <input 
-                  className="form-input" 
-                  id="biz-address" 
-                  style={{ paddingLeft: '36px' }} 
-                  placeholder="Pega el link de Google Maps aquí" 
-                  value={bizInfo.address} 
-                  onChange={handleBizChange} 
-                />
-              </div>
-              <button 
-                type="button"
-                className="btn btn--secondary btn--icon" 
-                title="Usar mi ubicación GPS actual"
-                onClick={() => {
-                  if (navigator.geolocation) {
-                    showToast('🛰️ Obteniendo GPS...');
-                    navigator.geolocation.getCurrentPosition(
-                      (pos) => {
-                        const { latitude, longitude } = pos.coords;
-                        const mapsUrl = `https://maps.google.com/maps?q=loc:${latitude},${longitude}`;
-                        setBizInfo(prev => ({ ...prev, address: mapsUrl }));
-                        showToast('📍 Link de ubicación generado');
-                      },
-                      (err) => {
-                        showToast('❌ Error: ' + err.message);
-                      }
-                    );
-                  } else {
-                    showToast('❌ GPS no soportado');
-                  }
-                }}
-              >
-                <MapPin size={20} />
-              </button>
-            </div>
-            <span className="form-hint">Puedes usar el botón 🛰️ o pegar el link compartido desde Google Maps.</span>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Slogan</label>
-            <input className="form-input" id="biz-tagline" placeholder="Tu frase característica" value={bizInfo.tagline} onChange={handleBizChange} />
-          </div>
+          {/* Opciones Adicionales trigger */}
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            style={{ alignSelf: 'flex-start', gap: '8px' }}
+            onClick={() => setShowExtrasModal(true)}
+          >
+            <Settings size={16} /> Opciones adicionales
+            {(bizInfo.promo || bizInfo.sides || bizInfo.address || bizInfo.tagline) && (
+              <span style={{ background: 'var(--primary)', color: '#fff', borderRadius: '999px', fontSize: '11px', padding: '1px 7px', marginLeft: '4px' }}>
+                {[bizInfo.promo, bizInfo.sides, bizInfo.address, bizInfo.tagline].filter(Boolean).length}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
@@ -641,6 +588,97 @@ const Creator = () => {
               Cerrar
             </button>
           </div>
+        </div>
+      </div>
+    )}
+
+    {/* Extras Modal — Optional fields */}
+    {showExtrasModal && (
+      <div className="modal-overlay" onClick={() => setShowExtrasModal(false)}>
+        <div className="section-card animate-in modal-content" onClick={e => e.stopPropagation()}>
+          <button className="modal-close" onClick={() => setShowExtrasModal(false)}><X size={24} /></button>
+          <div className="section-title"><Settings size={20} /> Opciones Adicionales</div>
+          <p style={{ fontSize: '14px', marginBottom: '20px', opacity: 0.7 }}>Estos campos son opcionales y enriquecen tu mensaje compartido.</p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+            <div className="form-group">
+              <label className="form-label">⭐ Especial del día</label>
+              <input className="form-input" id="biz-promo" placeholder="ej. Pollo al horno 17Bs" value={bizInfo.promo} onChange={handleBizChange} />
+              <span className="form-hint">Se mostrará como destacado en el mensaje y en el menú.</span>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Guarniciones</label>
+              <div style={{ position: 'relative' }}>
+                <Salad size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }} />
+                <input className="form-input" id="biz-sides" style={{ paddingLeft: '36px' }} placeholder="ej. Arroz blanco, Arroz curry" value={bizInfo.sides} onChange={handleBizChange} />
+              </div>
+              <span className="form-hint">Separa las guarniciones con comas.</span>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                Link de Ubicación (Google Maps)
+                <button
+                  type="button"
+                  onClick={() => window.open('https://www.google.com/maps', '_blank')}
+                  style={{ fontSize: '11px', color: 'var(--primary)', border: '1px solid var(--primary)', padding: '2px 8px', borderRadius: '4px', background: 'none', cursor: 'pointer' }}
+                >
+                  🔍 Buscar en Maps
+                </button>
+              </label>
+              <div style={{ position: 'relative', display: 'flex', gap: '8px' }}>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <MapPin size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }} />
+                  <input
+                    className="form-input"
+                    id="biz-address"
+                    style={{ paddingLeft: '36px' }}
+                    placeholder="Pega el link de Google Maps aquí"
+                    value={bizInfo.address}
+                    onChange={handleBizChange}
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="btn btn--secondary btn--icon"
+                  title="Usar mi ubicación GPS actual"
+                  onClick={() => {
+                    if (navigator.geolocation) {
+                      showToast('🛰️ Obteniendo GPS...');
+                      navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                          const { latitude, longitude } = pos.coords;
+                          const mapsUrl = `https://maps.google.com/maps?q=loc:${latitude},${longitude}`;
+                          setBizInfo(prev => ({ ...prev, address: mapsUrl }));
+                          showToast('📍 Link de ubicación generado');
+                        },
+                        (err) => { showToast('❌ Error: ' + err.message); }
+                      );
+                    } else {
+                      showToast('❌ GPS no soportado');
+                    }
+                  }}
+                >
+                  <MapPin size={20} />
+                </button>
+              </div>
+              <span className="form-hint">Usa el botón 🛰️ para GPS o pega el link de Google Maps.</span>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Slogan del negocio</label>
+              <input className="form-input" id="biz-tagline" placeholder="Tu frase característica" value={bizInfo.tagline} onChange={handleBizChange} />
+            </div>
+          </div>
+
+          <button
+            className="btn btn--primary btn--full"
+            style={{ marginTop: '24px' }}
+            onClick={() => setShowExtrasModal(false)}
+          >
+            Guardar y Cerrar
+          </button>
         </div>
       </div>
     )}
