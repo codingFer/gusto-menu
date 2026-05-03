@@ -26,7 +26,7 @@ const Layout = ({ children }) => {
     <>
       <nav className="navbar">
         <Link to="/" className="navbar-brand">
-          <span className="brand-icon">🍽️</span>
+          <img src="/favicon.webp" alt="GustoMenu" style={{ width: '32px', height: '32px', flexShrink: 0, borderRadius: '5px' }} />
           <span className="brand-name">GustoMenu</span>
         </Link>
         <div className="navbar-actions">
