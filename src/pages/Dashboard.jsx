@@ -60,7 +60,7 @@ const Dashboard = () => {
   if (!user) return null;
 
   return (
-    <div className="container animate-in container--wide">
+    <div className="container animate-in container--wide" style={{ minHeight: 'calc(100vh - var(--navbar-h) - 80px)' }}>
       {/* Edit Restaurant Modal */}
       {editingRes && (
         <EditModal 
