@@ -29,6 +29,82 @@ import {
 
 const LS_KEY = 'gustomenu_creator';
 
+const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+const HorariosEditor = ({ horariosStr, onChange }) => {
+  let parsed = [];
+  try {
+    if (horariosStr) parsed = JSON.parse(horariosStr);
+  } catch(e) {}
+
+  const scheduleUi = DAYS.map(d => {
+    const found = parsed.find(p => p.dia === d);
+    if (found && found.horario && found.horario.toLowerCase() !== 'cerrado') {
+      const parts = found.horario.split('-');
+      return {
+        dia: d,
+        isOpen: true,
+        openTime: parts[0]?.trim() || '09:00',
+        closeTime: parts[1]?.trim() || '18:00'
+      };
+    }
+    return { dia: d, isOpen: false, openTime: '09:00', closeTime: '18:00' };
+  });
+
+  const updateDay = (idx, field, val) => {
+    const newUi = [...scheduleUi];
+    newUi[idx] = { ...newUi[idx], [field]: val };
+    
+    const toSave = newUi.filter(d => d.isOpen).map(d => ({
+      dia: d.dia,
+      horario: `${d.openTime}-${d.closeTime}`
+    }));
+    onChange(JSON.stringify(toSave));
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--surface-container-low)', padding: '12px', borderRadius: 'var(--radius)', border: '1px solid var(--outline-variant)' }}>
+      {scheduleUi.map((item, i) => (
+        <div key={item.dia} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '4px 0' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100px', cursor: 'pointer' }}>
+            <input 
+              type="checkbox" 
+              checked={item.isOpen} 
+              onChange={(e) => updateDay(i, 'isOpen', e.target.checked)}
+              style={{ width: '16px', height: '16px', accentColor: 'var(--primary)' }}
+            />
+            <span style={{ fontWeight: 600, fontSize: '13px', color: item.isOpen ? 'var(--on-surface)' : 'var(--on-surface-variant)' }}>{item.dia}</span>
+          </label>
+          
+          {item.isOpen ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
+              <input 
+                type="time" 
+                className="form-input" 
+                style={{ padding: '4px 8px', height: 'auto', fontSize: '13px' }} 
+                value={item.openTime} 
+                onChange={(e) => updateDay(i, 'openTime', e.target.value)}
+              />
+              <span style={{ fontSize: '12px', color: 'var(--on-surface-variant)' }}>a</span>
+              <input 
+                type="time" 
+                className="form-input" 
+                style={{ padding: '4px 8px', height: 'auto', fontSize: '13px' }} 
+                value={item.closeTime} 
+                onChange={(e) => updateDay(i, 'closeTime', e.target.value)}
+              />
+            </div>
+          ) : (
+            <div style={{ flex: 1, fontSize: '13px', color: 'var(--error)', fontStyle: 'italic', opacity: 0.8 }}>
+              Cerrado
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const Creator = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -722,16 +798,12 @@ const Creator = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Horarios (Formato JSON)</label>
-              <textarea 
-                className="form-input" 
-                id="biz-horarios" 
-                placeholder={'[\n  {"dia": "Lunes", "horario": "09:00-18:00"}\n]'} 
-                value={bizInfo.horarios} 
-                onChange={handleBizChange} 
-                style={{ minHeight: '120px', fontFamily: 'monospace', fontSize: '12px' }}
+              <label className="form-label">Horarios de Atención</label>
+              <HorariosEditor 
+                horariosStr={bizInfo.horarios} 
+                onChange={(val) => setBizInfo(prev => ({ ...prev, horarios: val }))} 
               />
-              <span className="form-hint">Escribe los horarios en un arreglo JSON válido.</span>
+              <span className="form-hint">Marca la casilla para indicar qué días estás abierto y configura el horario.</span>
             </div>
           </div>
 
