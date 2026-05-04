@@ -124,12 +124,12 @@ app.get('/api/restaurantes/:slug', async (req, res) => {
 });
 
 app.post('/api/restaurantes', authenticateToken, async (req, res) => {
-  const { slug, nombre, whatsapp, whatsapp_opcional, tema, imagen_url } = req.body;
+  const { slug, nombre, whatsapp, whatsapp_opcional, tema, imagen_url, horarios } = req.body;
   const user_id = req.user.id;
   try {
     const { rows } = await db.query(
-      'INSERT INTO restaurantes (slug, nombre, whatsapp, whatsapp_opcional, tema, imagen_url, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [slug, nombre, whatsapp, whatsapp_opcional, tema, imagen_url, user_id]
+      'INSERT INTO restaurantes (slug, nombre, whatsapp, whatsapp_opcional, tema, imagen_url, horarios, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [slug, nombre, whatsapp, whatsapp_opcional, tema, imagen_url, horarios ? JSON.stringify(horarios) : null, user_id]
     );
     res.status(201).json({ id: rows.insertId, slug, nombre });
   } catch (err) {
@@ -140,7 +140,7 @@ app.post('/api/restaurantes', authenticateToken, async (req, res) => {
 
 app.put('/api/restaurantes/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
-  const { nombre, whatsapp, slug } = req.body;
+  const { nombre, whatsapp, slug, horarios } = req.body;
   const user_id = req.user.id;
 
   try {
@@ -152,8 +152,8 @@ app.put('/api/restaurantes/:id', authenticateToken, async (req, res) => {
     }
 
     await db.query(
-      'UPDATE restaurantes SET nombre = ?, whatsapp = ?, slug = ? WHERE id = ?',
-      [nombre, whatsapp, slug, id]
+      'UPDATE restaurantes SET nombre = ?, whatsapp = ?, slug = ?, horarios = ? WHERE id = ?',
+      [nombre, whatsapp, slug, horarios ? JSON.stringify(horarios) : null, id]
     );
     res.json({ message: 'Updated successfully' });
   } catch (err) {
@@ -163,7 +163,7 @@ app.put('/api/restaurantes/:id', authenticateToken, async (req, res) => {
 });
 
 app.post('/api/restaurantes/full', authenticateToken, async (req, res) => {
-  const { restaurante_id, items, name, theme, tagline, promo, direccion, guarniciones } = req.body;
+  const { restaurante_id, items, name, theme, tagline, promo, direccion, guarniciones, horarios } = req.body;
   const user_id = req.user.id;
   
   try {
@@ -176,8 +176,8 @@ app.post('/api/restaurantes/full', authenticateToken, async (req, res) => {
 
     // 2. Update restaurante metadata
     await db.query(
-      'UPDATE restaurantes SET nombre = ?, tema = ?, direccion = ? WHERE id = ?',
-      [name, theme, direccion, restaurante_id]
+      'UPDATE restaurantes SET nombre = ?, tema = ?, direccion = ?, horarios = ? WHERE id = ?',
+      [name, theme, direccion, horarios ? JSON.stringify(horarios) : null, restaurante_id]
     );
 
     // 3. Clear existing data

@@ -25,6 +25,7 @@ CREATE TABLE restaurantes (
   direccion TEXT,
   tema VARCHAR(50) DEFAULT 'light',
   imagen_url TEXT,
+  horarios JSON,
   FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
