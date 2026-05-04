@@ -163,7 +163,7 @@ app.put('/api/restaurantes/:id', authenticateToken, async (req, res) => {
 });
 
 app.post('/api/restaurantes/full', authenticateToken, async (req, res) => {
-  const { restaurante_id, items, name, theme, tagline, promo, direccion, guarniciones, horarios } = req.body;
+  const { restaurante_id, items, name, theme, tagline, promo, direccion, guarniciones, horarios, slug, whatsapp } = req.body;
   const user_id = req.user.id;
   
   try {
@@ -175,10 +175,16 @@ app.post('/api/restaurantes/full', authenticateToken, async (req, res) => {
     }
 
     // 2. Update restaurante metadata
-    await db.query(
-      'UPDATE restaurantes SET nombre = ?, tema = ?, direccion = ?, horarios = ? WHERE id = ?',
-      [name, theme, direccion, horarios ? JSON.stringify(horarios) : null, restaurante_id]
-    );
+    let query = 'UPDATE restaurantes SET nombre = ?, tema = ?, direccion = ?, horarios = ?';
+    let params = [name, theme, direccion, horarios ? JSON.stringify(horarios) : null];
+    
+    if (slug) { query += ', slug = ?'; params.push(slug); }
+    if (whatsapp) { query += ', whatsapp = ?'; params.push(whatsapp); }
+    
+    query += ' WHERE id = ?';
+    params.push(restaurante_id);
+    
+    await db.query(query, params);
 
     // 3. Clear existing data
     await db.query('DELETE FROM platillo_guarniciones WHERE platillo_id IN (SELECT id FROM platillos WHERE restaurante_id = ?)', [restaurante_id]);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { 
   EMOJIS, 
@@ -8,7 +8,7 @@ import {
   formatPrice, 
   copyToClipboard 
 } from '../utils';
-import { createFullMenu, getRestaurantes, getTiposPlatillo } from '../api';
+import { createFullMenu, getRestaurantes, getTiposPlatillo, getRestauranteById } from '../api';
 import { 
   ChevronUp, 
   ChevronDown, 
@@ -31,6 +31,7 @@ const LS_KEY = 'gustomenu_creator';
 
 const Creator = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { showToast, user } = useApp();
   const [isSaving, setIsSaving] = useState(false);
   const [myRestauranteId, setMyRestauranteId] = useState(null);
@@ -49,11 +50,13 @@ const Creator = () => {
           promo: data.promo || '',
           address: data.address || '',
           sides: data.sides || '',
-          menuPrice: data.menuPrice || ''
+          menuPrice: data.menuPrice || '',
+          slug: data.slug || '',
+          horarios: data.horarios || ''
         };
       }
     } catch (e) { console.error(e); }
-    return { name: '', prefix: '+591', phone: '', tagline: 'Comida casera con calidad y sabor inigualable.', promo: '', address: '', sides: '', menuPrice: '' };
+    return { name: '', prefix: '+591', phone: '', tagline: 'Comida casera con calidad y sabor inigualable.', promo: '', address: '', sides: '', menuPrice: '', slug: '', horarios: '' };
   });
   
   const [dishes, setDishes] = useState(() => {
@@ -78,8 +81,35 @@ const Creator = () => {
       // Fetch user restaurant
       if (user) {
         try {
-          const myRests = await getRestaurantes();
-          if (myRests.length > 0) setMyRestauranteId(myRests[0].id);
+          const searchParams = new URLSearchParams(location.search);
+          const editId = searchParams.get('id');
+
+          if (editId) {
+            const resData = await getRestauranteById(editId);
+            setMyRestauranteId(resData.id);
+            setBizInfo(prev => ({
+              ...prev,
+              name: resData.nombre || prev.name,
+              phone: resData.whatsapp ? resData.whatsapp.replace(/^\+591/, '') : prev.phone,
+              tagline: resData.tema || prev.tagline,
+              address: resData.direccion || prev.address,
+              slug: resData.slug || prev.slug,
+              horarios: resData.horarios ? JSON.stringify(resData.horarios, null, 2) : prev.horarios
+            }));
+            
+            if (resData.platillos && resData.platillos.length > 0) {
+              setDishes(resData.platillos.map(p => ({
+                id: p.id,
+                type: p.tipo_id === 1 ? 'sopa' : p.tipo_id === 2 ? 'segundo' : p.tipo_id === 3 ? 'segundo suelto' : p.tipo_id === 4 ? 'postre' : 'bebida',
+                emoji: p.emoji || '🍽️',
+                name: p.nombre,
+                price: p.precio || ''
+              })));
+            }
+          } else {
+            const myRests = await getRestaurantes();
+            if (myRests.length > 0) setMyRestauranteId(myRests[0].id);
+          }
         } catch (e) { console.error(e); }
       }
 
@@ -309,6 +339,16 @@ const Creator = () => {
       return;
     }
 
+    let parsedHorarios = null;
+    if (bizInfo.horarios && bizInfo.horarios.trim() !== '') {
+      try {
+        parsedHorarios = JSON.parse(bizInfo.horarios);
+      } catch (err) {
+        showToast('⚠️ JSON de Horarios inválido');
+        return;
+      }
+    }
+
     setIsSaving(true);
     try {
       await createFullMenu({
@@ -320,7 +360,10 @@ const Creator = () => {
         theme: 'light',
         tagline: bizInfo.tagline,
         promo: bizInfo.promo,
-        items: dishes
+        items: dishes,
+        slug: bizInfo.slug,
+        whatsapp: bizInfo.prefix + bizInfo.phone.trim(),
+        horarios: parsedHorarios
       });
       saveToHistory(); // Also save to local history when publishing
       showToast('✅ Cambios guardados en tu panel');
@@ -540,7 +583,17 @@ const Creator = () => {
 
       {/* CTA Sticky */}
       <div className="creator-cta">
-        <div className="creator-cta-inner">
+        <div className="creator-cta-inner" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            <button className="btn btn--ghost btn--full btn--sm" onClick={saveToHistory}>
+              <Save size={16} /> Guardar Local
+            </button>
+            {user && (
+              <button className="btn btn--secondary btn--full btn--sm" onClick={handleSaveToDashboard} disabled={isSaving}>
+                <Save size={16} /> {isSaving ? 'Publicando...' : 'Publicar Web'}
+              </button>
+            )}
+          </div>
           <button className="btn btn--primary btn--full btn--pill" onClick={handleGenerate} style={{ height: '56px', fontSize: '18px' }}>
             Generar Menú del Día
           </button>
@@ -574,17 +627,6 @@ const Creator = () => {
             <button className="btn btn--primary btn--full" onClick={() => { copyToClipboard(shareText); showToast('✅ Mensaje copiado'); }}>
               <Share2 size={18} /> Copiar para WhatsApp
             </button>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              <button className="btn btn--ghost btn--full btn--sm" onClick={saveToHistory}>
-                <Save size={16} /> Guardar Local
-              </button>
-              {user && (
-                <button className="btn btn--secondary btn--full btn--sm" onClick={handleSaveToDashboard} disabled={isSaving}>
-                  <Save size={16} /> {isSaving ? 'Publicando...' : 'Publicar Web'}
-                </button>
-              )}
-            </div>
             
             <button className="btn btn--ghost btn--full" style={{ marginTop: '10px', border: 'none' }} onClick={() => setShowModal(false)}>
               Cerrar
@@ -671,6 +713,25 @@ const Creator = () => {
             <div className="form-group">
               <label className="form-label">Slogan del negocio</label>
               <input className="form-input" id="biz-tagline" placeholder="Tu frase característica" value={bizInfo.tagline} onChange={handleBizChange} />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Slug (URL del restaurante)</label>
+              <input className="form-input" id="biz-slug" placeholder="mi-restaurante" value={bizInfo.slug} onChange={handleBizChange} />
+              <span className="form-hint">Tu menú aparecerá en: tusitio.com/<b>{bizInfo.slug || 'slug'}</b></span>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Horarios (Formato JSON)</label>
+              <textarea 
+                className="form-input" 
+                id="biz-horarios" 
+                placeholder={'[\n  {"dia": "Lunes", "horario": "09:00-18:00"}\n]'} 
+                value={bizInfo.horarios} 
+                onChange={handleBizChange} 
+                style={{ minHeight: '120px', fontFamily: 'monospace', fontSize: '12px' }}
+              />
+              <span className="form-hint">Escribe los horarios en un arreglo JSON válido.</span>
             </div>
           </div>
 

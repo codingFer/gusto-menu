@@ -113,7 +113,7 @@ const Dashboard = () => {
         <RestaurantsView 
           restaurantes={restaurantes} 
           loading={loading} 
-          onEdit={(res) => setEditingRes(res)}
+          onEdit={(res) => navigate(`/crear?id=${res.id}`)}
           isAdmin={user.role_id === 1}
         />
       ) : (
