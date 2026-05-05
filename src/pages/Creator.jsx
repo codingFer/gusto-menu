@@ -167,7 +167,9 @@ const Creator = () => {
               ...prev,
               name: resData.nombre || prev.name,
               phone: resData.whatsapp ? resData.whatsapp.replace(/^\+591/, '') : prev.phone,
-              tagline: resData.tema || prev.tagline,
+              tagline: resData.tagline || resData.tema || prev.tagline,
+              promo: resData.promo || prev.promo,
+              menuPrice: resData.precio_menu || prev.menuPrice,
               address: resData.direccion || prev.address,
               slug: resData.slug || prev.slug,
               horarios: resData.horarios ? JSON.stringify(resData.horarios, null, 2) : prev.horarios
@@ -436,6 +438,7 @@ const Creator = () => {
         theme: 'light',
         tagline: bizInfo.tagline,
         promo: bizInfo.promo,
+        precio_menu: bizInfo.menuPrice,
         items: dishes,
         slug: bizInfo.slug,
         whatsapp: bizInfo.prefix + bizInfo.phone.trim(),

@@ -163,7 +163,7 @@ app.put('/api/restaurantes/:id', authenticateToken, async (req, res) => {
 });
 
 app.post('/api/restaurantes/full', authenticateToken, async (req, res) => {
-  const { restaurante_id, items, name, theme, tagline, promo, direccion, guarniciones, horarios, slug, whatsapp } = req.body;
+  const { restaurante_id, items, name, theme, tagline, promo, precio_menu, direccion, guarniciones, horarios, slug, whatsapp } = req.body;
   const user_id = req.user.id;
   
   try {
@@ -175,8 +175,8 @@ app.post('/api/restaurantes/full', authenticateToken, async (req, res) => {
     }
 
     // 2. Update restaurante metadata
-    let query = 'UPDATE restaurantes SET nombre = ?, tema = ?, direccion = ?, horarios = ?';
-    let params = [name, theme, direccion, horarios ? JSON.stringify(horarios) : null];
+    let query = 'UPDATE restaurantes SET nombre = ?, tema = ?, direccion = ?, horarios = ?, tagline = ?, promo = ?, precio_menu = ?';
+    let params = [name, theme, direccion, horarios ? JSON.stringify(horarios) : null, tagline || null, promo || null, precio_menu || 0];
     
     if (slug) { query += ', slug = ?'; params.push(slug); }
     if (whatsapp) { query += ', whatsapp = ?'; params.push(whatsapp); }

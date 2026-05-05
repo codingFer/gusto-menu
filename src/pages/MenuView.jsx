@@ -27,14 +27,24 @@ const MenuView = () => {
       try {
         if (/^\d+$/.test(dParam)) {
           const res = await getRestauranteById(dParam);
+          
+          const mappedItems = (res.platillos || []).map(p => ({
+            ...p,
+            id: p.id,
+            name: p.nombre,
+            price: p.precio,
+            type: p.tipo_id === 1 ? 'sopa' : p.tipo_id === 2 ? 'segundo' : p.tipo_id === 3 ? 'segundo suelto' : p.tipo_id === 4 ? 'postre' : 'bebida',
+            emoji: p.emoji || '🍽️'
+          }));
+
           setData({
             name: res.nombre,
-            tagline: res.tagline,
+            tagline: res.tagline || res.tema, // Fallback a tema si no hay tagline
             promo: res.promo,
             theme: res.tema || 'light',
-            items: res.platillos || [],
+            items: mappedItems,
             whatsapp: res.whatsapp,
-            menuPrice: res.precio_menu
+            menuPrice: res.precio_menu || 0
           });
         } else {
           const decoded = decodeMenu(dParam);

@@ -26,6 +26,9 @@ CREATE TABLE restaurantes (
   tema VARCHAR(50) DEFAULT 'light',
   imagen_url TEXT,
   horarios JSON,
+  tagline VARCHAR(255),
+  promo VARCHAR(255),
+  precio_menu DECIMAL(10, 2) DEFAULT 0,
   FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
