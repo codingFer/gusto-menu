@@ -122,3 +122,19 @@ export async function updateRestaurante(id, restData) {
   if (!res.ok) throw new Error(data.error || 'Error al actualizar el restaurante');
   return data;
 }
+
+export async function uploadLogo(id, file) {
+  const formData = new FormData();
+  formData.append('logo', file);
+
+  const res = await fetch(`${API_URL}/restaurantes/${id}/logo`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeader()
+    },
+    body: formData,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error al subir la imagen');
+  return data;
+}

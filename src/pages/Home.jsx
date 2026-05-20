@@ -42,85 +42,25 @@ const Home = () => {
         >
           🍽️ Crear mi Menú Gratis
         </button>
-      </div>
-
-      <div className="home-steps">
-        <div className="home-step" style={{ animationDelay: '0.1s' }}>
-          <span className="step-icon">📝</span>
-          <div className="step-title">1. Crea</div>
-          <div className="step-desc">Ingresa tu menú con nombre, precio y emoji.</div>
-        </div>
-        <div className="home-step" style={{ animationDelay: '0.2s' }}>
-          <span className="step-icon">🔗</span>
-          <div className="step-title">2. Comparte</div>
-          <div className="step-desc">Copia el link y compártelo con tus clientes.</div>
-        </div>
-        <div className="home-step" style={{ animationDelay: '0.3s' }}>
-          <span className="step-icon">💬</span>
-          <div className="step-title">3. Recibe</div>
-          <div className="step-desc">Los pedidos llegan a tu WhatsApp automáticamente.</div>
-        </div>
-      </div>
-
-      {/* Objetivos / Lo que resolvemos */}
-      <div className="section-card animate-in" style={{ animationDelay: '0.35s', marginTop: 'var(--space-md)' }}>
-        <div className="section-title" style={{ fontSize: '18px', fontWeight: 800, color: 'var(--primary)', marginBottom: 'var(--space-md)' }}>
-          🎯 ¿Qué resolvemos con GustoMenu?
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
-          <div style={{ 
-            display: 'flex', 
-            gap: 'var(--space-md)', 
-            alignItems: 'center', 
-            padding: '16px', 
-            background: 'var(--surface-low)', 
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--outline-variant)',
-          }}>
-            <span style={{ fontSize: '32px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>📱</span>
-            <div>
-              <div style={{ fontWeight: 800, fontSize: '15px', color: 'var(--primary)' }}>Creación de Menús Digitales</div>
-              <div style={{ fontSize: '13px', opacity: 0.85, marginTop: '2px', lineHeight: '1.4' }}>
-                Diseña y personaliza menús interactivos, modernos y listos en minutos, adaptados a cualquier dispositivo.
-              </div>
-            </div>
-          </div>
-
-          <div style={{ 
-            display: 'flex', 
-            gap: 'var(--space-md)', 
-            alignItems: 'center', 
-            padding: '16px', 
-            background: 'var(--surface-low)', 
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--outline-variant)',
-          }}>
-            <span style={{ fontSize: '32px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>🗺️</span>
-            <div>
-              <div style={{ fontWeight: 800, fontSize: '15px', color: 'var(--primary)' }}>Mapa de Restaurantes Asociados</div>
-              <div style={{ fontSize: '13px', opacity: 0.85, marginTop: '2px', lineHeight: '1.4' }}>
-                Conéctate con otros locales, promueve tu negocio gastronómico y crea comunidad a través de nuestro mapa.
-              </div>
-            </div>
-          </div>
-
-          <div style={{ 
-            display: 'flex', 
-            gap: 'var(--space-md)', 
-            alignItems: 'center', 
-            padding: '16px', 
-            background: 'var(--surface-low)', 
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--outline-variant)',
-          }}>
-            <span style={{ fontSize: '32px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>⚡</span>
-            <div>
-              <div style={{ fontWeight: 800, fontSize: '15px', color: 'var(--primary)' }}>Pedidos sin Complicaciones</div>
-              <div style={{ fontSize: '13px', opacity: 0.85, marginTop: '2px', lineHeight: '1.4' }}>
-                Permite a tus clientes realizar pedidos desde su celular directos a tu WhatsApp, sin fricción ni demoras.
-              </div>
-            </div>
-          </div>
+        <div style={{ marginTop: 'var(--space-md)', textAlign: 'center' }}>
+          <button 
+            onClick={() => navigate('/info')}
+            style={{ 
+              background: 'transparent', 
+              color: '#fff', 
+              border: 'none', 
+              textDecoration: 'underline', 
+              fontSize: '14px', 
+              fontWeight: 600,
+              cursor: 'pointer',
+              opacity: 0.95,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            📖 ¿Cómo funciona? / Más información
+          </button>
         </div>
       </div>
 

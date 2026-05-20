@@ -29,25 +29,20 @@ const Layout = ({ children }) => {
           <img src="/favicon.webp" alt="GustoMenu" style={{ width: '32px', height: '32px', flexShrink: 0, borderRadius: '5px' }} />
           <span className="brand-name" style={{ color: user ? 'var(--primary)' : 'var(--on-surface)' }}>GustoMenu</span>
         </Link>
+        <div className="navbar-links">
+          <Link to="/" className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}>Inicio</Link>
+          <Link to="/info" className={`nav-link ${location.pathname === '/info' ? 'active' : ''}`}>¿Cómo funciona?</Link>
+          <Link to="/crear" className={`nav-link ${location.pathname === '/crear' ? 'active' : ''}`}>Crear Menú</Link>
+          {!user ? (
+            <Link to="/login" className={`nav-link ${location.pathname === '/login' ? 'active' : ''}`}>Iniciar Sesión</Link>
+          ) : (
+            <Link to="/dashboard" className={`nav-link ${location.pathname === '/dashboard' ? 'active' : ''}`}>Panel Admin</Link>
+          )}
+        </div>
         <div className="navbar-actions">
-          {user && !isDashboard && (
-            <button className="btn btn--secondary btn--sm" onClick={() => navigate('/dashboard')}>
-              <LayoutDashboard size={18} /> Panel
-            </button>
-          )}
-          {!user && isHome && (
-            <button className="btn btn--ghost btn--sm" onClick={() => navigate('/login')}>
-              Entrar
-            </button>
-          )}
           {user && (
-            <button className="btn btn--ghost btn--sm" onClick={handleLogout} style={{ color: 'var(--error)' }}>
+            <button className="btn btn--ghost btn--sm" onClick={handleLogout} style={{ color: 'var(--error)', borderColor: 'var(--outline-variant)' }}>
               Cerrar Sesión
-            </button>
-          )}
-          {isHome && (
-            <button className="btn btn--primary btn--sm" onClick={() => navigate('/crear')}>
-              + Crear Restaurante
             </button>
           )}
           <button 
@@ -63,16 +58,18 @@ const Layout = ({ children }) => {
 
       <main>{children}</main>
 
-      <footer style={{ textAlign: 'center', padding: '24px 16px', marginTop: 'auto', fontSize: '13px', color: 'var(--on-surface-variant)', opacity: 0.8 }}>
-        Desarrollado con ❤️ por{' '}
-        <a 
-          href="https://codingfer.com" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          style={{ color: 'var(--primary)', fontWeight: 800, textDecoration: 'none' }}
-        >
-          @codingFer
-        </a>
+      <footer style={{ textAlign: 'center', padding: '24px 16px', marginTop: 'auto', fontSize: '13px', color: 'var(--on-surface-variant)', opacity: 0.8, borderTop: '1px solid var(--outline-variant)' }}>
+        <div>
+          Desarrollado con ❤️ por{' '}
+          <a 
+            href="https://codingfer.com" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            style={{ color: 'var(--primary)', fontWeight: 800, textDecoration: 'none' }}
+          >
+            @codingFer
+          </a>
+        </div>
       </footer>
 
       {showSticky && (

@@ -277,8 +277,12 @@ const RestaurantsView = ({ restaurantes, loading, onEdit, isAdmin }) => (
         </button>
 
         <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center' }}>
-          <div style={{ background: 'var(--surface-container)', width: '56px', height: '56px', borderRadius: 'var(--radius)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Store size={32} style={{ color: 'var(--primary)' }} />
+          <div style={{ background: 'var(--surface-container)', width: '56px', height: '56px', borderRadius: 'var(--radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            {res.imagen_url ? (
+              <img src={res.imagen_url} alt={res.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <Store size={32} style={{ color: 'var(--primary)' }} />
+            )}
           </div>
           <div style={{ overflow: 'hidden', paddingRight: '32px' }}>
             <h3 style={{ fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{res.nombre}</h3>

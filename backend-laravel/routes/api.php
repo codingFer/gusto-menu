@@ -34,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/restaurantes', [ApiController::class, 'getRestaurantes']);
     Route::post('/restaurantes', [ApiController::class, 'createRestaurante']);
     Route::put('/restaurantes/{id}', [ApiController::class, 'updateRestaurante']);
+    Route::post('/restaurantes/{id}/logo', [ApiController::class, 'uploadLogo']);
     Route::post('/restaurantes/full', [ApiController::class, 'saveFullMenu']);
 
     // Admin only routes (checked in controller)

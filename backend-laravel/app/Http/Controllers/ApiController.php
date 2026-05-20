@@ -134,10 +134,47 @@ class ApiController extends Controller
             'nombre' => $request->nombre,
             'whatsapp' => $request->whatsapp,
             'slug' => $request->slug,
-            'horarios' => $request->horarios
+            'horarios' => $request->horarios,
+            'imagen_url' => $request->imagen_url
         ]);
 
         return response()->json(['message' => 'Updated successfully']);
+    }
+
+    public function uploadLogo(Request $request, $id)
+    {
+        $request->validate([
+            'logo' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+        ]);
+
+        $restaurante = Restaurante::find($id);
+        if (!$restaurante) {
+            return response()->json(['error' => 'Restaurante not found'], 404);
+        }
+
+        if ($restaurante->user_id !== $request->user()->id && $request->user()->role_id !== 1) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        if ($request->hasFile('logo')) {
+            $file = $request->file('logo');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            
+            // Move file to public/uploads/logos
+            $file->move(public_path('uploads/logos'), $filename);
+            
+            $logoUrl = asset('uploads/logos/' . $filename);
+            
+            $restaurante->imagen_url = $logoUrl;
+            $restaurante->save();
+
+            return response()->json([
+                'message' => 'Logo uploaded successfully',
+                'imagen_url' => $logoUrl
+            ]);
+        }
+
+        return response()->json(['error' => 'No file uploaded'], 400);
     }
 
     public function saveFullMenu(Request $request)
@@ -161,6 +198,7 @@ class ApiController extends Controller
 
         if ($request->has('slug')) $updateData['slug'] = $request->slug;
         if ($request->has('whatsapp')) $updateData['whatsapp'] = $request->whatsapp;
+        if ($request->has('imagen_url')) $updateData['imagen_url'] = $request->imagen_url;
 
         $restaurante->update($updateData);
 

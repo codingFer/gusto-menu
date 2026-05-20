@@ -8,7 +8,7 @@ import {
   formatPrice, 
   copyToClipboard 
 } from '../utils';
-import { createFullMenu, getRestaurantes, getTiposPlatillo, getRestauranteById } from '../api';
+import { createFullMenu, getRestaurantes, getTiposPlatillo, getRestauranteById, uploadLogo } from '../api';
 import { 
   ChevronUp, 
   ChevronDown, 
@@ -115,6 +115,7 @@ const Creator = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [myRestauranteId, setMyRestauranteId] = useState(null);
   const [tipos, setTipos] = useState([]);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   
   const [bizInfo, setBizInfo] = useState(() => {
     try {
@@ -131,11 +132,12 @@ const Creator = () => {
           sides: data.sides || '',
           menuPrice: data.menuPrice || '',
           slug: data.slug || '',
-          horarios: data.horarios || ''
+          horarios: data.horarios || '',
+          imagen_url: data.imagen_url || ''
         };
       }
     } catch (e) { console.error(e); }
-    return { name: '', prefix: '+591', phone: '', tagline: 'Comida casera con calidad y sabor inigualable.', promo: '', address: '', sides: '', menuPrice: '', slug: '', horarios: '' };
+    return { name: '', prefix: '+591', phone: '', tagline: 'Comida casera con calidad y sabor inigualable.', promo: '', address: '', sides: '', menuPrice: '', slug: '', horarios: '', imagen_url: '' };
   });
   
   const [dishes, setDishes] = useState(() => {
@@ -175,7 +177,8 @@ const Creator = () => {
               menuPrice: resData.precio_menu || prev.menuPrice,
               address: resData.direccion || prev.address,
               slug: resData.slug || prev.slug,
-              horarios: resData.horarios ? JSON.stringify(resData.horarios, null, 2) : prev.horarios
+              horarios: resData.horarios ? JSON.stringify(resData.horarios, null, 2) : prev.horarios,
+              imagen_url: resData.imagen_url || prev.imagen_url
             }));
             
             if (resData.platillos && resData.platillos.length > 0) {
@@ -223,6 +226,27 @@ const Creator = () => {
     const { id, value } = e.target;
     const key = id.replace('biz-', '');
     setBizInfo(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!myRestauranteId) {
+      showToast('⚠️ Primero debes tener un restaurante asignado o guardar los cambios para crearlo');
+      return;
+    }
+
+    setUploadingLogo(true);
+    try {
+      const data = await uploadLogo(myRestauranteId, file);
+      setBizInfo(prev => ({ ...prev, imagen_url: data.imagen_url }));
+      showToast('✅ Logo subido correctamente');
+    } catch (err) {
+      showToast('❌ ' + err.message);
+    } finally {
+      setUploadingLogo(false);
+    }
   };
 
   const addDish = (type = 'segundo') => {
@@ -445,7 +469,8 @@ const Creator = () => {
         items: dishes,
         slug: bizInfo.slug,
         whatsapp: bizInfo.prefix + bizInfo.phone.trim(),
-        horarios: parsedHorarios
+        horarios: parsedHorarios,
+        imagen_url: bizInfo.imagen_url
       });
       saveToHistory(); // Also save to local history when publishing
       showToast('✅ Cambios guardados en tu panel');
@@ -482,6 +507,39 @@ const Creator = () => {
               <div className="phone-prefix">{bizInfo.prefix}</div>
               <div className="phone-input-wrap">
                 <input className="form-input" id="biz-phone" type="tel" placeholder="Número de celular" value={bizInfo.phone} onChange={handleBizChange} />
+              </div>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Logo del Restaurante</label>
+            <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center' }}>
+              {bizInfo.imagen_url ? (
+                <img 
+                  src={bizInfo.imagen_url} 
+                  alt="Logo preview" 
+                  style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--outline-variant)' }} 
+                />
+              ) : (
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--surface-container)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
+                  🏢
+                </div>
+              )}
+              <div style={{ flex: 1 }}>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  style={{ display: 'none' }} 
+                  id="logo-upload" 
+                  onChange={handleLogoUpload} 
+                />
+                <label 
+                  htmlFor="logo-upload" 
+                  className="btn btn--secondary btn--sm" 
+                  style={{ cursor: 'pointer', display: 'inline-flex' }}
+                >
+                  {uploadingLogo ? 'Subiendo...' : 'Seleccionar Logo'}
+                </label>
               </div>
             </div>
           </div>

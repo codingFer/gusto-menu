@@ -8,6 +8,7 @@ import MenuView from './pages/MenuView';
 import Checkout from './pages/Checkout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Info from './pages/Info';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/info" element={<Info />} />
             <Route path="*" element={<Home />} />
           </Routes>
         </Layout>

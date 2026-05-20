@@ -44,7 +44,8 @@ const MenuView = () => {
             theme: res.tema || 'light',
             items: mappedItems,
             whatsapp: res.whatsapp,
-            menuPrice: res.precio_menu || 0
+            menuPrice: res.precio_menu || 0,
+            imagen_url: res.imagen_url
           });
         } else {
           const decoded = decodeMenu(dParam);
@@ -102,12 +103,29 @@ const MenuView = () => {
       {step === 1 ? (
         <div className="animate-in">
           {/* Hero */}
-          <div className="menu-hero">
-            <h1>{data.name}</h1>
-            {data.tagline && <div className="tagline">{data.tagline}</div>}
-            <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-              <span className="badge badge--open">● ABIERTO</span>
-              <span className="badge badge--time" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff' }}>⏱ 15-25 min</span>
+          <div className="menu-hero" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+            {data.imagen_url && (
+              <img 
+                src={data.imagen_url} 
+                alt="Logo" 
+                style={{ 
+                  width: '72px', 
+                  height: '72px', 
+                  borderRadius: '50%', 
+                  objectFit: 'cover', 
+                  border: '2px solid rgba(255,255,255,0.4)', 
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+                  flexShrink: 0 
+                }} 
+              />
+            )}
+            <div style={{ flex: 1, minWidth: '200px' }}>
+              <h1 style={{ margin: 0, fontSize: '28px' }}>{data.name}</h1>
+              {data.tagline && <div className="tagline" style={{ marginTop: '4px' }}>{data.tagline}</div>}
+              <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                <span className="badge badge--open">● ABIERTO</span>
+                <span className="badge badge--time" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff' }}>⏱ 15-25 min</span>
+              </div>
             </div>
           </div>
           
