@@ -44,11 +44,17 @@ const Dashboard = () => {
     setLoading(true);
     try {
       const restData = await getRestaurantes();
-      setRestaurantes(restData);
       
       if (user.role_id === 1) {
+        setRestaurantes(restData);
         const userData = await getUsers();
         setUsers(userData);
+      } else {
+        if (restData.length > 0) {
+          navigate(`/crear?id=${restData[0].id}`);
+        } else {
+          setRestaurantes([]);
+        }
       }
     } catch (err) {
       showToast('❌ Error al cargar datos');

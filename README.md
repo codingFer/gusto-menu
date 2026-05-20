@@ -6,6 +6,16 @@
 
 ---
 
+## 🎯 Objetivos del Proyecto
+
+Esta aplicación web está diseñada para solucionar tres necesidades fundamentales:
+
+1. **Creación de Menús Digitales**: Permitir a los negocios gastronómicos crear y personalizar sus menús digitales en cuestión de minutos de manera sumamente sencilla.
+2. **Mapa de Asociados**: Generar un mapa interactivo de restaurantes asociados para potenciar la socialización, visibilidad y descubrimiento de los locales relacionados.
+3. **Pedidos sin Complicaciones**: Permitir a los clientes realizar sus pedidos de forma fluida, ágil y sin complicaciones técnicas.
+
+---
+
 ## ✨ Características Principales
 
 - **🚀 Creación Instantánea**: Genera un menú completo simplemente llenando un formulario.

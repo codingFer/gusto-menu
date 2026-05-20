@@ -34,7 +34,10 @@ const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', '
 const HorariosEditor = ({ horariosStr, onChange }) => {
   let parsed = [];
   try {
-    if (horariosStr) parsed = JSON.parse(horariosStr);
+    if (horariosStr) {
+      const p = JSON.parse(horariosStr);
+      if (Array.isArray(p)) parsed = p;
+    }
   } catch(e) {}
 
   const scheduleUi = DAYS.map(d => {
@@ -446,7 +449,9 @@ const Creator = () => {
       });
       saveToHistory(); // Also save to local history when publishing
       showToast('✅ Cambios guardados en tu panel');
-      navigate('/dashboard');
+      if (user.role_id === 1) {
+        navigate('/dashboard');
+      }
     } catch (err) {
       showToast('❌ ' + err.message);
     } finally {
