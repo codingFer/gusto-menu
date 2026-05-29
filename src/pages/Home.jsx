@@ -37,7 +37,7 @@ const Home = () => {
         <p>Crea tu menú en minutos, comparte el link y recibe pedidos directamente en tu WhatsApp.</p>
         <button 
           className="btn btn--full" 
-          style={{ background: 'var(--card-bg)', color: 'var(--primary)', fontWeight: 800, fontSize: '17px' }}
+          style={{ background: 'var(--hero-btn-bg)', color: 'var(--hero-btn-text)', fontWeight: 800, fontSize: '17px' }}
           onClick={handleCreateNew}
         >
           🍽️ Crear mi Menú Gratis
@@ -47,7 +47,7 @@ const Home = () => {
             onClick={() => navigate('/info')}
             style={{ 
               background: 'transparent', 
-              color: '#fff', 
+              color: 'var(--hero-link)', 
               border: 'none', 
               textDecoration: 'underline', 
               fontSize: '14px', 

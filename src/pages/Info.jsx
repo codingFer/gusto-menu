@@ -47,10 +47,10 @@ const Info = () => {
       {/* Hero de Info */}
       <div 
         style={{ 
-          background: 'linear-gradient(135deg, var(--primary) 0%, #ff5e62 100%)', 
+          background: 'var(--hero-bg)', 
           borderRadius: 'var(--radius-xl)', 
           padding: 'var(--space-xl) var(--space-lg)', 
-          color: '#fff', 
+          color: 'var(--hero-text)', 
           textAlign: 'center', 
           marginBottom: 'var(--space-xl)',
           boxShadow: '0 10px 30px var(--shadow-primary)',

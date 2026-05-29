@@ -427,12 +427,12 @@ const CheckoutBar = ({ data, onReview }) => {
 
   return (
     <div className="sticky-bar animate-in" style={{ padding: 0, borderTop: 'none', background: 'transparent', pointerEvents: 'none' }}>
-      <div className="sticky-inner" style={{ pointerEvents: 'auto', background: 'var(--primary)', color: '#fff', borderRadius: 0, padding: '16px 24px', boxShadow: '0 -4px 20px rgba(0,0,0,0.3)', maxWidth: '100%', margin: 0, width: '100%' }}>
+      <div className="sticky-inner" style={{ pointerEvents: 'auto', background: 'var(--primary)', color: 'var(--on-primary)', borderRadius: 0, padding: '16px 24px', boxShadow: '0 -4px 20px rgba(0,0,0,0.3)', maxWidth: '100%', margin: 0, width: '100%' }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span style={{ fontSize: '12px', opacity: 0.8, fontWeight: 700 }}>{totalItems} platillos</span>
           <span style={{ fontSize: '18px', fontWeight: 900 }}>Bs.{totalPrice.toFixed(1)}</span>
         </div>
-        <button className="btn btn--whatsapp btn--sm" onClick={onReview} style={{ boxShadow: 'none', background: '#fff', color: 'var(--primary)', minWidth: '140px' }}>
+        <button className="btn btn--whatsapp btn--sm" onClick={onReview} style={{ boxShadow: 'none', background: 'var(--on-primary)', color: 'var(--primary)', minWidth: '140px' }}>
           Ver Pedido
         </button>
       </div>
@@ -452,7 +452,7 @@ const ItemControl = ({ itemKey }) => {
     <div className="qty-controls">
       <button className="qty-btn" onClick={() => removeFromCart(itemKey)}><Minus size={16} /></button>
       <span className="qty-num">{qty}</span>
-      <button className="qty-btn" onClick={() => addToCart(itemKey)} style={{ background: 'var(--primary)', color: '#fff' }}><Plus size={16} /></button>
+      <button className="qty-btn" onClick={() => addToCart(itemKey)} style={{ background: 'var(--primary)', color: 'var(--on-primary)' }}><Plus size={16} /></button>
     </div>
   );
 };
