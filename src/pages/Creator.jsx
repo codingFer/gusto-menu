@@ -24,8 +24,10 @@ import {
   Coffee, 
   IceCream,
   X,
-  Settings
+  Settings,
+  ImageDown
 } from 'lucide-react';
+import ExportModal from '../components/ExportModal';
 
 const LS_KEY = 'gustomenu_creator';
 
@@ -155,6 +157,7 @@ const Creator = () => {
   const [shareText, setShareText] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showExtrasModal, setShowExtrasModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   
 
   useEffect(() => {
@@ -726,15 +729,23 @@ const Creator = () => {
       {/* CTA Sticky */}
       <div className="creator-cta">
         <div className="creator-cta-inner" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
             <button className="btn btn--ghost btn--full btn--sm" onClick={saveToHistory}>
-              <Save size={16} /> Guardar Local
+              <Save size={16} /> Guardar
             </button>
             {user && (
               <button className="btn btn--secondary btn--full btn--sm" onClick={handleSaveToDashboard} disabled={isSaving}>
-                <Save size={16} /> {isSaving ? 'Publicando...' : 'Publicar Web'}
+                <Save size={16} /> {isSaving ? '...' : 'Publicar'}
               </button>
             )}
+            <button
+              className="btn btn--full btn--sm"
+              style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)', color:'#fff', border:'none' }}
+              onClick={() => setShowExportModal(true)}
+              title="Exportar como imagen PNG"
+            >
+              <ImageDown size={16} /> Exportar
+            </button>
           </div>
           <button className="btn btn--primary btn--full btn--pill" onClick={handleGenerate} style={{ height: '56px', fontSize: '18px' }}>
             Generar Menú del Día
@@ -743,7 +754,7 @@ const Creator = () => {
       </div>
     </div>
 
-    {/* Results Modal - Outside the animated container to avoid fixed positioning issues */}
+    {/* Results Modal */}
     {showModal && (
       <div className="modal-overlay" onClick={() => setShowModal(false)}>
         <div className="section-card animate-in modal-content" onClick={e => e.stopPropagation()}>
@@ -769,8 +780,14 @@ const Creator = () => {
             <button className="btn btn--primary btn--full" onClick={() => { copyToClipboard(shareText); showToast('✅ Mensaje copiado'); }}>
               <Share2 size={18} /> Copiar para WhatsApp
             </button>
-            
-            <button className="btn btn--ghost btn--full" style={{ marginTop: '10px', border: 'none' }} onClick={() => setShowModal(false)}>
+            <button
+              className="btn btn--full"
+              style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)', color:'#fff', border:'none', marginTop:'4px' }}
+              onClick={() => { setShowModal(false); setShowExportModal(true); }}
+            >
+              <ImageDown size={18} /> Exportar como Imagen
+            </button>
+            <button className="btn btn--ghost btn--full" style={{ border: 'none' }} onClick={() => setShowModal(false)}>
               Cerrar
             </button>
           </div>
@@ -882,6 +899,24 @@ const Creator = () => {
           </button>
         </div>
       </div>
+    )}
+
+    {/* Export Modal */}
+    {showExportModal && (
+      <ExportModal
+        data={{
+          name: bizInfo.name,
+          tagline: bizInfo.tagline,
+          promo: bizInfo.promo,
+          address: bizInfo.address,
+          sides: bizInfo.sides,
+          whatsapp: bizInfo.prefix + bizInfo.phone,
+          menuPrice: bizInfo.menuPrice,
+          imagen_url: bizInfo.imagen_url,
+          items: dishes.filter(d => d.name.trim() !== '')
+        }}
+        onClose={() => setShowExportModal(false)}
+      />
     )}
     </>
   );
