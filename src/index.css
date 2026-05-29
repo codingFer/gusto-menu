@@ -631,6 +631,25 @@ input, textarea, select { font-family: var(--font); }
 }
 .animate-in { animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
+@keyframes dishHighlight {
+  0% {
+    transform: scale(0.96);
+    box-shadow: 0 0 0 3px var(--primary);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 8px 20px var(--shadow-primary);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  }
+}
+.dish-item--highlight {
+  animation: dishHighlight 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 10;
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 480px) {
   .home-steps { grid-template-columns: 1fr; }

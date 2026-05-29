@@ -153,6 +153,7 @@ const Creator = () => {
     return [];
   });
   const [openEmojiIdx, setOpenEmojiIdx] = useState(null);
+  const [highlightedDishId, setHighlightedDishId] = useState(null);
   const [generatedUrl, setGeneratedUrl] = useState('');
   const [shareText, setShareText] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -298,12 +299,29 @@ const Creator = () => {
   };
 
   const moveDish = (idx, direction) => {
+    const d = dishes[idx];
+    const typeIndices = dishes.reduce((acc, item, index) => {
+      if (item.type === d.type) acc.push(index);
+      return acc;
+    }, []);
+    const position = typeIndices.indexOf(idx);
+    const targetPosition = direction === 'up' ? position - 1 : position + 1;
+    if (targetPosition < 0 || targetPosition >= typeIndices.length) return;
+
+    const targetIdx = typeIndices[targetPosition];
     const newDishes = [...dishes];
-    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
-    if (targetIdx < 0 || targetIdx >= dishes.length) return;
-    const [removed] = newDishes.splice(idx, 1);
-    newDishes.splice(targetIdx, 0, removed);
+
+    // Swap the elements
+    const temp = newDishes[idx];
+    newDishes[idx] = newDishes[targetIdx];
+    newDishes[targetIdx] = temp;
+
+    setHighlightedDishId(d.id);
     setDishes(newDishes);
+
+    setTimeout(() => {
+      setHighlightedDishId(null);
+    }, 600);
   };
 
   const handleGenerate = () => {
@@ -611,8 +629,21 @@ const Creator = () => {
                 </div>
                 {dishes.map((d, i) => {
                   if (d.type !== type) return null;
+
+                  const typeIndices = dishes.reduce((acc, item, index) => {
+                    if (item.type === d.type) acc.push(index);
+                    return acc;
+                  }, []);
+                  const groupIndex = typeIndices.indexOf(i);
+                  const isFirstInGroup = groupIndex === 0;
+                  const isLastInGroup = groupIndex === typeIndices.length - 1;
+
                   return (
-                    <div key={d.id || i} data-dish-id={d.id} className={`dish-item dish-item--${d.type.replace(' ', '-')}`}>
+                    <div 
+                      key={d.id || i} 
+                      data-dish-id={d.id} 
+                      className={`dish-item dish-item--${d.type.replace(' ', '-')} ${highlightedDishId === d.id ? 'dish-item--highlight' : ''}`}
+                    >
                       <div className="dish-main-content">
                         {/* Emoji column */}
                         <div className="dish-emoji-col">
@@ -654,10 +685,10 @@ const Creator = () => {
 
                         {/* Order controls column */}
                         <div className="dish-order-col">
-                          <button className="order-btn" onClick={() => moveDish(i, 'up')} disabled={i === 0}>
+                          <button className="order-btn" onClick={() => moveDish(i, 'up')} disabled={isFirstInGroup}>
                             <ChevronUp size={24} />
                           </button>
-                          <button className="order-btn" onClick={() => moveDish(i, 'down')} disabled={i === dishes.length - 1}>
+                          <button className="order-btn" onClick={() => moveDish(i, 'down')} disabled={isLastInGroup}>
                             <ChevronDown size={24} />
                           </button>
                         </div>
