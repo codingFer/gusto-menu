@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye } from 'lucide-react';
+import { Eye, Trash2 } from 'lucide-react';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -23,6 +23,13 @@ const Home = () => {
       dishes: entry.dishes
     }));
     navigate('/crear');
+  };
+
+  const deleteFromHistory = (id, e) => {
+    e.stopPropagation();
+    const updated = history.filter(entry => entry.id !== id);
+    setHistory(updated);
+    localStorage.setItem('gustomenu_history', JSON.stringify(updated));
   };
 
   const handleCreateNew = () => {
@@ -85,8 +92,25 @@ const Home = () => {
                   <div style={{ fontWeight: 800, fontSize: '14px' }}>{entry.bizInfo.name}</div>
                   <div style={{ fontSize: '12px', opacity: 0.6 }}>{entry.date} · {entry.dishes.length} platos</div>
                 </div>
-                <div style={{ color: 'var(--primary)', padding: '4px' }}>
-                  <Eye size={16} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ color: 'var(--primary)', padding: '4px', display: 'flex', alignItems: 'center' }}>
+                    <Eye size={16} />
+                  </div>
+                  <button 
+                    onClick={(e) => deleteFromHistory(entry.id, e)}
+                    style={{ 
+                      background: 'transparent',
+                      color: 'var(--error)', 
+                      padding: '4px',
+                      cursor: 'pointer',
+                      border: 'none',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                    title="Eliminar del historial"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </div>
             ))}
