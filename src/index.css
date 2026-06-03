@@ -180,6 +180,7 @@ input, textarea, select { font-family: var(--font); }
 .btn--secondary {
   background: var(--surface-high);
   color: var(--on-surface);
+  border: 1px solid var(--outline-variant);
 }
 .btn--secondary:hover { background: var(--surface-highest); }
 .btn--ghost {

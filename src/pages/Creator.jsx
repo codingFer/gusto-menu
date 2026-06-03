@@ -774,19 +774,6 @@ const Creator = () => {
                             <button
                               type="button"
                               className="btn btn--secondary btn--sm"
-                              style={{ 
-                                height: '28px', 
-                                minHeight: 'unset', 
-                                padding: '0 10px', 
-                                fontSize: '11px', 
-                                display: 'inline-flex', 
-                                alignItems: 'center', 
-                                gap: '4px',
-                                borderRadius: '6px',
-                                background: 'var(--surface-container-high)',
-                                color: 'var(--on-surface-variant)',
-                                border: '1px solid var(--outline-variant)'
-                              }}
                               onClick={() => openAcompanamientosEditor(i)}
                             >
                               <Salad size={12} /> Acompañamientos
@@ -811,7 +798,7 @@ const Creator = () => {
                             {d.acompanamientos && d.acompanamientos.length > 0 && (
                               <div style={{ fontSize: '10px', color: 'var(--on-surface-variant)', opacity: 0.8, display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
                                 {d.acompanamientos.map((g, idx) => (
-                                  <span key={idx} style={{ background: 'var(--surface-container-lowest)', border: '1px solid var(--outline-variant)', padding: '2px 6px', borderRadius: '4px' }}>
+                                  <span key={idx} style={{ background: 'var(--surface-low)', border: '1px solid var(--outline-variant)', padding: '2px 6px', borderRadius: '4px' }}>
                                     <b>{g.titulo}:</b> {g.opciones.map(op => `${op.emoji || ''} ${op.text || op}`).join(', ')}
                                   </span>
                                 ))}
