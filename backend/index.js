@@ -102,7 +102,18 @@ app.get('/api/restaurantes/id/:id', async (req, res) => {
     if (rows.length === 0) return res.status(404).json({ error: 'Restaurante not found' });
     
     const dishes = await db.query('SELECT * FROM platillos WHERE restaurante_id = ? ORDER BY orden ASC', [id]);
-    res.json({ ...rows[0], platillos: dishes.rows });
+    const dishesParsed = dishes.rows.map(d => {
+      let parsed = [];
+      if (d.acompanamientos) {
+        try {
+          parsed = typeof d.acompanamientos === 'string' ? JSON.parse(d.acompanamientos) : d.acompanamientos;
+        } catch (e) {
+          console.error('Error parsing acompanamientos:', e);
+        }
+      }
+      return { ...d, acompanamientos: parsed };
+    });
+    res.json({ ...rows[0], platillos: dishesParsed });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error fetching restaurant' });
@@ -116,7 +127,18 @@ app.get('/api/restaurantes/:slug', async (req, res) => {
     if (rows.length === 0) return res.status(404).json({ error: 'Restaurante not found' });
     
     const dishes = await db.query('SELECT * FROM platillos WHERE restaurante_id = ? ORDER BY orden ASC', [rows[0].id]);
-    res.json({ ...rows[0], platillos: dishes.rows });
+    const dishesParsed = dishes.rows.map(d => {
+      let parsed = [];
+      if (d.acompanamientos) {
+        try {
+          parsed = typeof d.acompanamientos === 'string' ? JSON.parse(d.acompanamientos) : d.acompanamientos;
+        } catch (e) {
+          console.error('Error parsing acompanamientos:', e);
+        }
+      }
+      return { ...d, acompanamientos: parsed };
+    });
+    res.json({ ...rows[0], platillos: dishesParsed });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error fetching restaurant' });
@@ -201,13 +223,23 @@ app.post('/api/restaurantes/full', authenticateToken, async (req, res) => {
     // Mapping: sopa -> 1, segundo -> 2, segundo suelto -> 3, postre -> 4, bebida -> 5
     const typeMap = { 'sopa': 1, 'segundo': 2, 'segundo suelto': 3, 'postre': 4, 'bebida': 5, 'standard': 2 };
     
+    console.log('ITEM:', item);
+    console.log('ACOMPANAMIENTOS:', item.acompanamientos);
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       const tipoId = typeMap[item.type] || 2;
       
       await db.query(
-        'INSERT INTO platillos (restaurante_id, tipo_id, nombre, precio, emoji, orden) VALUES (?, ?, ?, ?, ?, ?)',
-        [restaurante_id, tipoId, item.name, item.price || 0, item.emoji, i]
+        'INSERT INTO platillos (restaurante_id, tipo_id, nombre, precio, emoji, orden, acompanamientos) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [
+          restaurante_id,
+          tipoId,
+          item.name,
+          item.price || 0,
+          item.emoji,
+          i,
+          item.acompanamientos ? JSON.stringify(item.acompanamientos) : null
+        ]
       );
     }
 

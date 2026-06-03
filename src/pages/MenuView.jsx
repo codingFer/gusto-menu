@@ -3,16 +3,18 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { decodeMenu, formatPrice } from '../utils';
 import { getRestauranteById } from '../api';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, Salad, X } from 'lucide-react';
 
 const MenuView = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { showToast, cart } = useApp();
+  const { showToast, cart, addToCart, setMenuData, setCurrentMenuEncoded } = useApp();
   
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [step, setStep] = useState(1); // 1: Menú, 2: Carrito
+  const [customizingItem, setCustomizingItem] = useState(null);
+  const [selectedChoices, setSelectedChoices] = useState({});
 
   const dParam = searchParams.get('d');
 
@@ -34,22 +36,38 @@ const MenuView = () => {
             name: p.nombre,
             price: p.precio,
             type: p.tipo_id === 1 ? 'sopa' : p.tipo_id === 2 ? 'segundo' : p.tipo_id === 3 ? 'segundo suelto' : p.tipo_id === 4 ? 'postre' : 'bebida',
-            emoji: p.emoji || '🍽️'
+            emoji: p.emoji || '🍽️',
+            acompanamientos: p.acompanamientos || []
           }));
 
-          setData({
+          const menuObj = {
             name: res.nombre,
             tagline: res.tagline || res.tema, // Fallback a tema si no hay tagline
             promo: res.promo,
             theme: res.tema || 'light',
             items: mappedItems,
             whatsapp: res.whatsapp,
+            phone: res.whatsapp,
             menuPrice: res.precio_menu || 0,
             imagen_url: res.imagen_url
-          });
+          };
+          setData(menuObj);
+          setMenuData(menuObj);
+          setCurrentMenuEncoded(dParam);
         } else {
           const decoded = decodeMenu(dParam);
-          if (decoded) setData(decoded);
+          if (decoded) {
+            // Map items to make sure they have acompanamientos in decoded menu data
+            if (decoded.items) {
+              decoded.items = decoded.items.map(item => ({
+                ...item,
+                acompanamientos: item.acompanamientos || []
+              }));
+            }
+            setData(decoded);
+            setMenuData(decoded);
+            setCurrentMenuEncoded(dParam);
+          }
         }
       } catch (err) {
         showToast('❌ No se pudo cargar el menú');
@@ -59,6 +77,22 @@ const MenuView = () => {
     }
     loadMenu();
   }, [dParam]);
+
+  const handleAddItemClick = (item) => {
+    if (item.acompanamientos && item.acompanamientos.length > 0) {
+      setCustomizingItem(item);
+      const initialChoices = {};
+      item.acompanamientos.forEach(group => {
+        if (group.opciones && group.opciones.length > 0) {
+          initialChoices[group.titulo] = group.opciones[0];
+        }
+      });
+      setSelectedChoices(initialChoices);
+    } else {
+      addToCart(item.id || item.name);
+      showToast('🍴 Plato añadido al pedido');
+    }
+  };
 
   if (loading) {
     return <div className="container" style={{ textAlign: 'center', padding: '100px' }}>Cargando menú...</div>;
@@ -170,7 +204,7 @@ const MenuView = () => {
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
                         <div className="menu-card-price">{formatPrice(item.precio || item.price)}</div>
-                        <ItemControl itemKey={item.id || item.name} />
+                        <ItemControl itemKey={item.id || item.name} item={item} onAdd={handleAddItemClick} />
                       </div>
                     </div>
                   ))}
@@ -187,6 +221,96 @@ const MenuView = () => {
 
     </div>
     {step === 1 && <CheckoutBar data={data} onReview={() => setStep(2)} />}
+
+    {/* Customise Item Modal */}
+    {customizingItem && (
+      <div className="modal-overlay" onClick={() => setCustomizingItem(null)}>
+        <div className="section-card animate-in modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+          <button className="modal-close" onClick={() => setCustomizingItem(null)}><X size={24} /></button>
+          
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '16px' }}>
+            <span style={{ fontSize: '40px' }}>{customizingItem.emoji || '🍽️'}</span>
+            <div>
+              <h3 style={{ fontSize: '20px', fontWeight: 900, margin: 0 }}>{customizingItem.nombre || customizingItem.name}</h3>
+              <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--primary)' }}>
+                {formatPrice(customizingItem.precio || customizingItem.price)}
+              </span>
+            </div>
+          </div>
+          
+          <div style={{ borderTop: '1px solid var(--outline-variant)', margin: '12px 0' }}></div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '24px' }}>
+            {customizingItem.acompanamientos.map((group, gIdx) => (
+              <div key={gIdx} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label style={{ fontWeight: 800, fontSize: '14px', textTransform: 'uppercase', color: 'var(--on-surface-variant)' }}>
+                    {group.titulo}
+                  </label>
+                  <span style={{ fontSize: '11px', background: 'var(--primary-container)', color: 'var(--primary)', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
+                    Obligatorio
+                  </span>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {group.opciones.map((opt, oIdx) => {
+                    const isSelected = selectedChoices[group.titulo] === opt;
+                    return (
+                      <label 
+                        key={oIdx} 
+                        style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'space-between',
+                          padding: '12px 16px', 
+                          borderRadius: '12px', 
+                          border: isSelected ? '2px solid var(--primary)' : '1px solid var(--outline-variant)',
+                          background: isSelected ? 'var(--primary-container)' : 'var(--surface-container-low)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          fontWeight: isSelected ? 'bold' : 'normal'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <input 
+                            type="radio" 
+                            name={`choice-${gIdx}`} 
+                            checked={isSelected}
+                            onChange={() => setSelectedChoices(prev => ({ ...prev, [group.titulo]: opt }))}
+                            style={{ width: '18px', height: '18px', accentColor: 'var(--primary)', cursor: 'pointer' }}
+                          />
+                          <span style={{ fontSize: '15px', color: isSelected ? 'var(--primary)' : 'var(--on-surface)', cursor: 'pointer' }}>{opt}</span>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button 
+            className="btn btn--primary btn--full btn--pill" 
+            style={{ height: '52px', fontSize: '16px' }}
+            onClick={() => {
+              const choicesArray = customizingItem.acompanamientos.map(g => selectedChoices[g.titulo]).filter(Boolean);
+              const customKey = `${customizingItem.id || customizingItem.name}_${choicesArray.join('-')}`;
+              const displayName = `${customizingItem.nombre || customizingItem.name} (${choicesArray.join(', ')})`;
+              
+              addToCart(customKey, { 
+                name: displayName, 
+                price: customizingItem.precio || customizingItem.price 
+              });
+              
+              showToast('✨ Plato personalizado añadido');
+              setCustomizingItem(null);
+            }}
+          >
+            Añadir al Pedido
+          </button>
+        </div>
+      </div>
+    )}
     </>
   );
 };
@@ -201,8 +325,11 @@ const OrderReviewView = ({ data, onBack }) => {
     if (key.startsWith('combo-')) {
       price = parseFloat(cartItem.price || 0);
     } else {
-      const item = data.items.find(i => (i.id || i.name) == key);
-      if (item) price = parseFloat(item.precio || item.price || 0);
+      const baseKey = key.includes('_') ? key.split('_')[0] : key;
+      const item = data.items.find(i => (i.id || i.name) == baseKey);
+      if (item) {
+        price = cartItem.price !== undefined ? parseFloat(cartItem.price) : parseFloat(item.precio || item.price || 0);
+      }
     }
     totalPrice += price * cartItem.qty;
   });
@@ -216,10 +343,11 @@ const OrderReviewView = ({ data, onBack }) => {
         name = cartItem.name;
         price = parseFloat(cartItem.price || 0);
       } else {
-        const item = data.items.find(i => (i.id || i.name) == key);
+        const baseKey = key.includes('_') ? key.split('_')[0] : key;
+        const item = data.items.find(i => (i.id || i.name) == baseKey);
         if (item) {
-          name = item.nombre || item.name;
-          price = parseFloat(item.precio || item.price || 0);
+          name = cartItem.name || item.nombre || item.name;
+          price = cartItem.price !== undefined ? parseFloat(cartItem.price) : parseFloat(item.precio || item.price || 0);
         }
       }
       if (name) {
@@ -286,10 +414,11 @@ const CartItem = ({ itemKey, cartItem, data }) => {
   let emoji = isCombo ? '🍱' : '🍴';
 
   if (!isCombo) {
-    const item = data.items.find(i => (i.id || i.name) == itemKey);
+    const baseKey = itemKey.includes('_') ? itemKey.split('_')[0] : itemKey;
+    const item = data.items.find(i => (i.id || i.name) == baseKey);
     if (item) {
-      name = item.nombre || item.name;
-      price = parseFloat(item.precio || item.price || 0);
+      name = cartItem.name || item.nombre || item.name;
+      price = cartItem.price !== undefined ? parseFloat(cartItem.price) : parseFloat(item.precio || item.price || 0);
       emoji = item.emoji || '🍴';
     }
   } else {
@@ -419,8 +548,11 @@ const CheckoutBar = ({ data, onReview }) => {
     if (key.startsWith('combo-')) {
       price = parseFloat(cartItem.price || 0);
     } else {
-      const item = data.items.find(i => (i.id || i.name) == key);
-      if (item) price = parseFloat(item.precio || item.price || 0);
+      const baseKey = key.includes('_') ? key.split('_')[0] : key;
+      const item = data.items.find(i => (i.id || i.name) == baseKey);
+      if (item) {
+        price = cartItem.price !== undefined ? parseFloat(cartItem.price) : parseFloat(item.precio || item.price || 0);
+      }
     }
     totalPrice += price * cartItem.qty;
   });
@@ -440,8 +572,56 @@ const CheckoutBar = ({ data, onReview }) => {
   );
 };
 
-const ItemControl = ({ itemKey }) => {
+const ItemControl = ({ itemKey, item, onAdd }) => {
   const { cart, addToCart, removeFromCart } = useApp();
+
+  const hasAcompanamientos = item && item.acompanamientos && item.acompanamientos.length > 0;
+
+  if (hasAcompanamientos) {
+    const totalQty = Object.entries(cart)
+      .filter(([key]) => {
+        const baseKey = key.includes('_') ? key.split('_')[0] : key;
+        return baseKey == itemKey;
+      })
+      .reduce((sum, [, cartItem]) => sum + cartItem.qty, 0);
+
+    if (totalQty === 0) {
+      return (
+        <button 
+          className="add-btn" 
+          onClick={() => onAdd(item)} 
+          aria-label="Agregar"
+        >
+          <Plus size={20} />
+        </button>
+      );
+    }
+
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ 
+          fontSize: '11px', 
+          fontWeight: 'bold', 
+          background: 'var(--primary-container)', 
+          color: 'var(--primary)', 
+          padding: '4px 8px', 
+          borderRadius: '12px',
+          whiteSpace: 'nowrap'
+        }}>
+          {totalQty} en carrito
+        </span>
+        <button 
+          className="qty-btn" 
+          onClick={() => onAdd(item)}
+          style={{ background: 'var(--primary)', color: 'var(--on-primary)', width: '28px', height: '28px' }}
+          title="Añadir otro con diferentes opciones"
+        >
+          <Plus size={16} />
+        </button>
+      </div>
+    );
+  }
+
   const qty = cart[itemKey]?.qty || 0;
 
   if (qty === 0) {

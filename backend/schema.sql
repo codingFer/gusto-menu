@@ -50,6 +50,7 @@ CREATE TABLE platillos (
   emoji VARCHAR(10),
   orden INT DEFAULT 0,
   activo BOOLEAN DEFAULT TRUE,
+  acompanamientos TEXT NULL,
   FOREIGN KEY (restaurante_id) REFERENCES restaurantes(id) ON DELETE CASCADE,
   FOREIGN KEY (tipo_id) REFERENCES tipos_platillo(id)
 );

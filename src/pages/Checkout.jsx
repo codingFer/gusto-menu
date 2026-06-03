@@ -23,8 +23,30 @@ const Checkout = () => {
   }
 
   const cartItems = Object.entries(cart)
-    .filter(([, qty]) => qty > 0)
-    .map(([idx, qty]) => ({ item: menuData.items[+idx], qty, idx: +idx }));
+    .filter(([, cartItem]) => cartItem && cartItem.qty > 0)
+    .map(([key, cartItem]) => {
+      let item = null;
+      if (key.startsWith('combo-')) {
+        item = {
+          name: cartItem.name,
+          price: cartItem.price,
+          emoji: '🍱'
+        };
+      } else {
+        const baseKey = key.includes('_') ? key.split('_')[0] : key;
+        const found = menuData.items.find(i => (i.id || i.name) == baseKey);
+        if (found) {
+          item = {
+            ...found,
+            name: cartItem.name || found.nombre || found.name,
+            price: cartItem.price !== undefined ? cartItem.price : (found.precio || found.price),
+            emoji: found.emoji || '🍴'
+          };
+        }
+      }
+      return { item, qty: cartItem.qty, key };
+    })
+    .filter(entry => entry.item !== null);
 
   const handleSendOrder = () => {
     if (!customerName.trim()) {
@@ -47,7 +69,8 @@ const Checkout = () => {
       `💰 *Total:* ${formatPrice(total)}\n\n` +
       `_Pedido enviado desde GustoMenu_`;
 
-    const waUrl = `https://wa.me/${menuData.phone}?text=${encodeURIComponent(message)}`;
+    const phone = menuData.whatsapp || menuData.phone || '';
+    const waUrl = `https://wa.me/${phone.replace(/\+/g, '')}?text=${encodeURIComponent(message)}`;
     window.location.href = waUrl;
   };
 
@@ -60,8 +83,8 @@ const Checkout = () => {
 
       <div className="order-summary-card">
         <div className="order-summary-head">🧾 Resumen</div>
-        {cartItems.map(({ item, qty, idx }) => (
-          <div key={idx} className="order-item">
+        {cartItems.map(({ item, qty, key }) => (
+          <div key={key} className="order-item">
             <div className="order-item-left">
               <span className="order-qty-badge">{qty}x</span>
               <span className="order-item-name">{item.emoji} {item.name}</span>

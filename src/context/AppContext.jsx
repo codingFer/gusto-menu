@@ -38,13 +38,20 @@ export const AppProvider = ({ children }) => {
   };
 
   const getCartTotal = () => {
-    if (!menuData) return { count: 0, total: 0 };
+    if (!menuData || !menuData.items) return { count: 0, total: 0 };
     let count = 0, total = 0;
-    Object.entries(cart).forEach(([idx, qty]) => {
-      const item = menuData.items[+idx];
-      if (item && qty > 0) {
-        count += qty;
-        total += qty * parseFloat(item.price || 0);
+    Object.entries(cart).forEach(([key, cartItem]) => {
+      if (cartItem && cartItem.qty > 0) {
+        count += cartItem.qty;
+        let price = 0;
+        if (key.startsWith('combo-')) {
+          price = parseFloat(cartItem.price || 0);
+        } else {
+          const baseKey = key.includes('_') ? key.split('_')[0] : key;
+          const item = menuData.items.find(i => (i.id || i.name) == baseKey);
+          if (item) price = parseFloat(item.precio || item.price || 0);
+        }
+        total += cartItem.qty * price;
       }
     });
     return { count, total };
