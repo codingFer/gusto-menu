@@ -110,6 +110,379 @@ const HorariosEditor = ({ horariosStr, onChange }) => {
   );
 };
 
+const AcompanamientosModal = ({ dish, onSave, onClose }) => {
+  const { showToast } = useApp();
+  const [tempAcompanamientos, setTempAcompanamientos] = useState(() => {
+    const cloned = dish.acompanamientos 
+      ? JSON.parse(JSON.stringify(dish.acompanamientos)) 
+      : [];
+    return cloned.map(g => ({
+      ...g,
+      opciones: g.opciones.map(op => {
+        if (typeof op === 'string') {
+          return { text: op, emoji: autoSuggestEmoji(op) || '🍽️' };
+        }
+        return { 
+          text: op.text || op, 
+          emoji: op.emoji || autoSuggestEmoji(op.text || op) || '🍽️' 
+        };
+      })
+    }));
+  });
+  const [openEmojiPicker, setOpenEmojiPicker] = useState(null); // { groupIdx, optionIdx }
+
+  // Prevent background scrolling while modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
+
+  const addAcompanamientoGroup = () => {
+    setTempAcompanamientos(prev => [...prev, { titulo: '', opciones: [] }]);
+  };
+
+  const updateTempGroupTitle = (groupIndex, value) => {
+    const updated = [...tempAcompanamientos];
+    updated[groupIndex].titulo = value;
+    setTempAcompanamientos(updated);
+  };
+
+  const addOptionToGroup = (groupIndex, text) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    
+    const updated = [...tempAcompanamientos];
+    if (updated[groupIndex].opciones.some(op => op.text.toLowerCase() === trimmed.toLowerCase())) {
+      showToast('⚠️ Esta opción ya existe');
+      return;
+    }
+    
+    updated[groupIndex].opciones.push({
+      text: trimmed,
+      emoji: autoSuggestEmoji(trimmed) || '🍽️'
+    });
+    setTempAcompanamientos(updated);
+  };
+
+  const removeOptionFromGroup = (groupIndex, optionIndex) => {
+    const updated = [...tempAcompanamientos];
+    updated[groupIndex].opciones = updated[groupIndex].opciones.filter((_, i) => i !== optionIndex);
+    setTempAcompanamientos(updated);
+  };
+
+  const updateOptionEmoji = (groupIndex, optionIndex, emoji) => {
+    const updated = [...tempAcompanamientos];
+    updated[groupIndex].opciones[optionIndex].emoji = emoji;
+    setTempAcompanamientos(updated);
+    setOpenEmojiPicker(null);
+  };
+
+  const removeTempGroup = (groupIndex) => {
+    setTempAcompanamientos(tempAcompanamientos.filter((_, idx) => idx !== groupIndex));
+  };
+
+  const handleSave = () => {
+    const validGroups = tempAcompanamientos
+      .filter(g => g.titulo.trim() !== '' && g.opciones.length > 0)
+      .map(g => ({
+        titulo: g.titulo.trim(),
+        opciones: g.opciones.map(op => ({ text: op.text, emoji: op.emoji }))
+      }));
+    onSave(validGroups);
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="section-card animate-in modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '520px' }}>
+        <button className="modal-close" onClick={onClose}><X size={24} /></button>
+        
+        <div className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Salad size={22} style={{ color: 'var(--primary)' }} /> 
+          <span>Acompañamientos</span>
+        </div>
+        
+        <div style={{ marginBottom: '16px' }}>
+          <span style={{ fontSize: '13px', color: 'var(--on-surface-variant)', opacity: 0.7 }}>Plato: </span>
+          <span style={{ fontWeight: 800, fontSize: '15px' }}>
+            {dish.emoji} {dish.name || '(Sin nombre)'}
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: '400px', overflowY: 'auto', paddingRight: '4px', marginBottom: '20px' }}>
+          {tempAcompanamientos.length === 0 ? (
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '32px 24px', 
+              background: 'var(--surface-container-low)', 
+              borderRadius: '12px', 
+              border: '1.5px dashed var(--outline-variant)',
+              color: 'var(--on-surface-variant)',
+              fontSize: '14px'
+            }}>
+              <Salad size={32} style={{ marginBottom: '8px', opacity: 0.5 }} />
+              <div>No hay acompañamientos configurados</div>
+              <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.7 }}>Añade un grupo de opciones abajo</div>
+            </div>
+          ) : (
+            tempAcompanamientos.map((group, gIdx) => (
+              <div key={gIdx} style={{ 
+                background: 'var(--surface-container-low)', 
+                padding: '16px', 
+                borderRadius: '12px', 
+                border: '1px solid var(--outline-variant)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px',
+                position: 'relative'
+              }}>
+                {/* Header del grupo */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '32px' }}>
+                  <input 
+                    className="form-input" 
+                    style={{ 
+                      flex: 1,
+                      minHeight: '36px', 
+                      padding: '6px 12px', 
+                      fontSize: '14px', 
+                      fontWeight: 700,
+                      borderRadius: '8px',
+                      background: 'var(--surface)'
+                    }}
+                    placeholder="Título del grupo (ej. Guarnición)"
+                    value={group.titulo}
+                    onChange={(e) => updateTempGroupTitle(gIdx, e.target.value)}
+                  />
+                  <button 
+                    type="button"
+                    style={{ 
+                      background: 'none', 
+                      color: 'var(--error)', 
+                      opacity: 0.7, 
+                      padding: '6px', 
+                      border: 'none', 
+                      cursor: 'pointer',
+                      borderRadius: '6px'
+                    }}
+                    onClick={() => removeTempGroup(gIdx)}
+                    title="Eliminar grupo"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+
+                {/* Lista horizontal de opciones con emojis */}
+                <div>
+                  <label style={{ 
+                    fontSize: '11px', 
+                    fontWeight: 600, 
+                    color: 'var(--on-surface-variant)', 
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    display: 'block',
+                    marginBottom: '8px'
+                  }}>
+                    Opciones
+                  </label>
+                  
+                  <div style={{ 
+                    display: 'flex', 
+                    flexWrap: 'wrap', 
+                    gap: '8px', 
+                    minHeight: '36px',
+                    alignItems: 'center'
+                  }}>
+                    {group.opciones.map((op, oIdx) => (
+                      <div 
+                        key={oIdx}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '6px 10px 6px 6px',
+                          background: 'var(--surface)',
+                          border: '1.5px solid var(--outline)',
+                          borderRadius: '20px',
+                          fontSize: '13px',
+                          color: 'var(--on-surface)',
+                          transition: 'all 0.2s',
+                          animation: 'tagIn 0.2s ease-out'
+                        }}
+                      >
+                        {/* Emoji picker */}
+                        <div style={{ position: 'relative' }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenEmojiPicker(
+                                openEmojiPicker?.groupIdx === gIdx && openEmojiPicker?.optionIdx === oIdx 
+                                  ? null 
+                                  : { groupIdx: gIdx, optionIdx: oIdx }
+                              );
+                            }}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontSize: '16px',
+                              padding: '2px',
+                              borderRadius: '4px',
+                              lineHeight: 1
+                            }}
+                            title="Cambiar emoji"
+                          >
+                            {op.emoji}
+                          </button>
+                          {openEmojiPicker?.groupIdx === gIdx && openEmojiPicker?.optionIdx === oIdx && (
+                            <div 
+                              style={{
+                                position: 'absolute',
+                                bottom: '100%',
+                                left: '0',
+                                marginBottom: '4px',
+                                background: 'var(--surface)',
+                                border: '1px solid var(--outline)',
+                                borderRadius: '8px',
+                                padding: '6px',
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(6, 1fr)',
+                                gap: '4px',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                zIndex: 100,
+                                maxWidth: '200px'
+                              }}
+                            >
+                              {EMOJIS.map(e => (
+                                <button
+                                  key={e}
+                                  onClick={() => updateOptionEmoji(gIdx, oIdx, e)}
+                                  style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '18px',
+                                    padding: '4px',
+                                    borderRadius: '4px',
+                                    lineHeight: 1
+                                  }}
+                                >
+                                  {e}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        
+                        <span style={{ fontWeight: 500 }}>{op.text}</span>
+                        
+                        <button
+                          type="button"
+                          onClick={() => removeOptionFromGroup(gIdx, oIdx)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: 'var(--error)',
+                            opacity: 0.6,
+                            padding: '2px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '50%',
+                            width: '18px',
+                            height: '18px',
+                            fontSize: '12px'
+                          }}
+                          title="Eliminar opción"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                    
+                    {/* Input para añadir nueva opción */}
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        id={`new-option-${gIdx}`}
+                        placeholder="+ Añadir..."
+                        style={{
+                          minHeight: '32px',
+                          padding: '4px 28px 4px 12px',
+                          fontSize: '13px',
+                          borderRadius: '16px',
+                          border: '1.5px dashed var(--outline)',
+                          background: 'transparent',
+                          color: 'var(--on-surface)',
+                          width: '120px',
+                          outline: 'none'
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            addOptionToGroup(gIdx, e.target.value);
+                            e.target.value = '';
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (e.target.value.trim()) {
+                            addOptionToGroup(gIdx, e.target.value);
+                            e.target.value = '';
+                          }
+                        }}
+                      />
+                      <Plus 
+                        size={14} 
+                        style={{ 
+                          position: 'absolute', 
+                          right: '8px', 
+                          color: 'var(--primary)',
+                          pointerEvents: 'none'
+                        }} 
+                      />
+                    </div>
+                  </div>
+                  
+                  <span style={{ fontSize: '11px', color: 'var(--on-surface-variant)', opacity: 0.7, marginTop: '6px', display: 'block' }}>
+                    Presiona Enter para añadir. Los clientes podrán elegir una opción de este grupo.
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <button 
+          type="button"
+          className="btn btn--secondary btn--full btn--sm" 
+          style={{ marginBottom: '20px', gap: '6px', borderRadius: '8px', border: '1.5px dashed var(--outline)' }}
+          onClick={addAcompanamientoGroup}
+        >
+          <Plus size={16} /> Añadir Grupo de Opciones
+        </button>
+
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button 
+            className="btn btn--primary" 
+            style={{ flex: 1, borderRadius: '8px', minHeight: '44px' }} 
+            onClick={handleSave}
+          >
+            Guardar Cambios
+          </button>
+          <button 
+            className="btn btn--secondary" 
+            style={{ flex: 1, borderRadius: '8px', minHeight: '44px' }} 
+            onClick={onClose}
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Creator = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -160,9 +533,6 @@ const Creator = () => {
   const [showExtrasModal, setShowExtrasModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [editingDishIdx, setEditingDishIdx] = useState(null);
-  const [showAcompanamientosModal, setShowAcompanamientosModal] = useState(false);
-  const [tempAcompanamientos, setTempAcompanamientos] = useState([]);
-  const [openEmojiPicker, setOpenEmojiPicker] = useState(null); // { groupIdx, optionIdx }
 
   const [history, setHistory] = useState(() => {
     try {
@@ -226,13 +596,13 @@ const Creator = () => {
   }, [bizInfo, dishes]);
 
   useEffect(() => {
-    if (showModal || showExtrasModal || showAcompanamientosModal) {
+    if (showModal || showExtrasModal || editingDishIdx !== null) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'auto';
     }
     return () => { document.body.style.overflow = 'auto'; };
-  }, [showModal, showExtrasModal, showAcompanamientosModal]);
+  }, [showModal, showExtrasModal, editingDishIdx]);
 
   const handleBizChange = (e) => {
     const { id, value } = e.target;
@@ -311,86 +681,6 @@ const Creator = () => {
 
   const openAcompanamientosEditor = (idx) => {
     setEditingDishIdx(idx);
-    const dish = dishes[idx];
-    const cloned = dish.acompanamientos 
-      ? JSON.parse(JSON.stringify(dish.acompanamientos)) 
-      : [];
-    const withEmojis = cloned.map(g => ({
-      ...g,
-      opciones: g.opciones.map(op => {
-        if (typeof op === 'string') {
-          return { text: op, emoji: autoSuggestEmoji(op) || '🍽️' };
-        }
-        return { 
-          text: op.text || op, 
-          emoji: op.emoji || autoSuggestEmoji(op.text || op) || '🍽️' 
-        };
-      })
-    }));
-    setTempAcompanamientos(withEmojis);
-    setShowAcompanamientosModal(true);
-  };
-
-  const addAcompanamientoGroup = () => {
-    setTempAcompanamientos(prev => [...prev, { titulo: '', opciones: [] }]);
-  };
-
-  const updateTempGroupTitle = (groupIndex, value) => {
-    const updated = [...tempAcompanamientos];
-    updated[groupIndex].titulo = value;
-    setTempAcompanamientos(updated);
-  };
-
-  const addOptionToGroup = (groupIndex, text) => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    
-    const updated = [...tempAcompanamientos];
-    if (updated[groupIndex].opciones.some(op => op.text.toLowerCase() === trimmed.toLowerCase())) {
-      showToast('⚠️ Esta opción ya existe');
-      return;
-    }
-    
-    updated[groupIndex].opciones.push({
-      text: trimmed,
-      emoji: autoSuggestEmoji(trimmed) || '🍽️'
-    });
-    setTempAcompanamientos(updated);
-  };
-
-  const removeOptionFromGroup = (groupIndex, optionIndex) => {
-    const updated = [...tempAcompanamientos];
-    updated[groupIndex].opciones = updated[groupIndex].opciones.filter((_, i) => i !== optionIndex);
-    setTempAcompanamientos(updated);
-  };
-
-  const updateOptionEmoji = (groupIndex, optionIndex, emoji) => {
-    const updated = [...tempAcompanamientos];
-    updated[groupIndex].opciones[optionIndex].emoji = emoji;
-    setTempAcompanamientos(updated);
-    setOpenEmojiPicker(null);
-  };
-
-  const removeTempGroup = (groupIndex) => {
-    setTempAcompanamientos(tempAcompanamientos.filter((_, idx) => idx !== groupIndex));
-  };
-
-  const saveAcompanamientos = () => {
-    if (editingDishIdx !== null) {
-      const newDishes = [...dishes];
-      const validGroups = tempAcompanamientos
-        .filter(g => g.titulo.trim() !== '' && g.opciones.length > 0)
-        .map(g => ({
-          titulo: g.titulo.trim(),
-          opciones: g.opciones.map(op => ({ text: op.text, emoji: op.emoji }))
-        }));
-      newDishes[editingDishIdx].acompanamientos = validGroups;
-      setDishes(newDishes);
-      showToast('✅ Acompañamientos actualizados');
-    }
-    setShowAcompanamientosModal(false);
-    setEditingDishIdx(null);
-    setOpenEmojiPicker(null);
   };
 
   // ========== FIN ACOMPAÑAMIENTOS ==========
@@ -1056,297 +1346,18 @@ const Creator = () => {
     )}
 
     {/* ========== MODAL ACOMPAÑAMIENTOS - NUEVO DISEÑO ========== */}
-    {showAcompanamientosModal && editingDishIdx !== null && (
-      <div className="modal-overlay" onClick={() => setShowAcompanamientosModal(false)}>
-        <div className="section-card animate-in modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '520px' }}>
-          <button className="modal-close" onClick={() => setShowAcompanamientosModal(false)}><X size={24} /></button>
-          
-          <div className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Salad size={22} style={{ color: 'var(--primary)' }} /> 
-            <span>Acompañamientos</span>
-          </div>
-          
-          <div style={{ marginBottom: '16px' }}>
-            <span style={{ fontSize: '13px', color: 'var(--on-surface-variant)', opacity: 0.7 }}>Plato: </span>
-            <span style={{ fontWeight: 800, fontSize: '15px' }}>
-              {dishes[editingDishIdx].emoji} {dishes[editingDishIdx].name || '(Sin nombre)'}
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: '400px', overflowY: 'auto', paddingRight: '4px', marginBottom: '20px' }}>
-            {tempAcompanamientos.length === 0 ? (
-              <div style={{ 
-                textAlign: 'center', 
-                padding: '32px 24px', 
-                background: 'var(--surface-container-low)', 
-                borderRadius: '12px', 
-                border: '1.5px dashed var(--outline-variant)',
-                color: 'var(--on-surface-variant)',
-                fontSize: '14px'
-              }}>
-                <Salad size={32} style={{ marginBottom: '8px', opacity: 0.5 }} />
-                <div>No hay acompañamientos configurados</div>
-                <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.7 }}>Añade un grupo de opciones abajo</div>
-              </div>
-            ) : (
-              tempAcompanamientos.map((group, gIdx) => (
-                <div key={gIdx} style={{ 
-                  background: 'var(--surface-container-low)', 
-                  padding: '16px', 
-                  borderRadius: '12px', 
-                  border: '1px solid var(--outline-variant)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '14px',
-                  position: 'relative'
-                }}>
-                  {/* Header del grupo */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '32px' }}>
-                    <input 
-                      className="form-input" 
-                      style={{ 
-                        flex: 1,
-                        minHeight: '36px', 
-                        padding: '6px 12px', 
-                        fontSize: '14px', 
-                        fontWeight: 700,
-                        borderRadius: '8px',
-                        background: 'var(--surface)'
-                      }}
-                      placeholder="Título del grupo (ej. Guarnición)"
-                      value={group.titulo}
-                      onChange={(e) => updateTempGroupTitle(gIdx, e.target.value)}
-                    />
-                    <button 
-                      type="button"
-                      style={{ 
-                        background: 'none', 
-                        color: 'var(--error)', 
-                        opacity: 0.7, 
-                        padding: '6px', 
-                        border: 'none', 
-                        cursor: 'pointer',
-                        borderRadius: '6px'
-                      }}
-                      onClick={() => removeTempGroup(gIdx)}
-                      title="Eliminar grupo"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-
-                  {/* Lista horizontal de opciones con emojis */}
-                  <div>
-                    <label style={{ 
-                      fontSize: '11px', 
-                      fontWeight: 600, 
-                      color: 'var(--on-surface-variant)', 
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      display: 'block',
-                      marginBottom: '8px'
-                    }}>
-                      Opciones
-                    </label>
-                    
-                    <div style={{ 
-                      display: 'flex', 
-                      flexWrap: 'wrap', 
-                      gap: '8px', 
-                      minHeight: '36px',
-                      alignItems: 'center'
-                    }}>
-                      {group.opciones.map((op, oIdx) => (
-                        <div 
-                          key={oIdx}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            padding: '6px 10px 6px 6px',
-                            background: 'var(--surface)',
-                            border: '1.5px solid var(--outline)',
-                            borderRadius: '20px',
-                            fontSize: '13px',
-                            color: 'var(--on-surface)',
-                            transition: 'all 0.2s',
-                            animation: 'tagIn 0.2s ease-out'
-                          }}
-                        >
-                          {/* Emoji picker */}
-                          <div style={{ position: 'relative' }}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setOpenEmojiPicker(
-                                  openEmojiPicker?.groupIdx === gIdx && openEmojiPicker?.optionIdx === oIdx 
-                                    ? null 
-                                    : { groupIdx: gIdx, optionIdx: oIdx }
-                                );
-                              }}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                cursor: 'pointer',
-                                fontSize: '16px',
-                                padding: '2px',
-                                borderRadius: '4px',
-                                lineHeight: 1
-                              }}
-                              title="Cambiar emoji"
-                            >
-                              {op.emoji}
-                            </button>
-                            {openEmojiPicker?.groupIdx === gIdx && openEmojiPicker?.optionIdx === oIdx && (
-                              <div 
-                                style={{
-                                  position: 'absolute',
-                                  bottom: '100%',
-                                  left: '0',
-                                  marginBottom: '4px',
-                                  background: 'var(--surface)',
-                                  border: '1px solid var(--outline)',
-                                  borderRadius: '8px',
-                                  padding: '6px',
-                                  display: 'grid',
-                                  gridTemplateColumns: 'repeat(6, 1fr)',
-                                  gap: '4px',
-                                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                                  zIndex: 100,
-                                  maxWidth: '200px'
-                                }}
-                              >
-                                {EMOJIS.map(e => (
-                                  <button
-                                    key={e}
-                                    onClick={() => updateOptionEmoji(gIdx, oIdx, e)}
-                                    style={{
-                                      background: 'none',
-                                      border: 'none',
-                                      cursor: 'pointer',
-                                      fontSize: '18px',
-                                      padding: '4px',
-                                      borderRadius: '4px',
-                                      lineHeight: 1
-                                    }}
-                                  >
-                                    {e}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                          
-                          <span style={{ fontWeight: 500 }}>{op.text}</span>
-                          
-                          <button
-                            type="button"
-                            onClick={() => removeOptionFromGroup(gIdx, oIdx)}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              cursor: 'pointer',
-                              color: 'var(--error)',
-                              opacity: 0.6,
-                              padding: '2px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              borderRadius: '50%',
-                              width: '18px',
-                              height: '18px',
-                              fontSize: '12px'
-                            }}
-                            title="Eliminar opción"
-                          >
-                            <X size={12} />
-                          </button>
-                        </div>
-                      ))}
-                      
-                      {/* Input para añadir nueva opción */}
-                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                        <input
-                          type="text"
-                          id={`new-option-${gIdx}`}
-                          placeholder="+ Añadir..."
-                          style={{
-                            minHeight: '32px',
-                            padding: '4px 28px 4px 12px',
-                            fontSize: '13px',
-                            borderRadius: '16px',
-                            border: '1.5px dashed var(--outline)',
-                            background: 'transparent',
-                            color: 'var(--on-surface)',
-                            width: '120px',
-                            outline: 'none'
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              addOptionToGroup(gIdx, e.target.value);
-                              e.target.value = '';
-                            }
-                          }}
-                          onBlur={(e) => {
-                            if (e.target.value.trim()) {
-                              addOptionToGroup(gIdx, e.target.value);
-                              e.target.value = '';
-                            }
-                          }}
-                        />
-                        <Plus 
-                          size={14} 
-                          style={{ 
-                            position: 'absolute', 
-                            right: '8px', 
-                            color: 'var(--primary)',
-                            pointerEvents: 'none'
-                          }} 
-                        />
-                      </div>
-                    </div>
-                    
-                    <span style={{ fontSize: '11px', color: 'var(--on-surface-variant)', opacity: 0.7, marginTop: '6px', display: 'block' }}>
-                      Presiona Enter para añadir. Los clientes podrán elegir una opción de este grupo.
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          <button 
-            type="button"
-            className="btn btn--secondary btn--full btn--sm" 
-            style={{ marginBottom: '20px', gap: '6px', borderRadius: '8px', border: '1.5px dashed var(--outline)' }}
-            onClick={addAcompanamientoGroup}
-          >
-            <Plus size={16} /> Añadir Grupo de Opciones
-          </button>
-
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button 
-              className="btn btn--primary" 
-              style={{ flex: 1, borderRadius: '8px', minHeight: '44px' }} 
-              onClick={saveAcompanamientos}
-            >
-              Guardar Cambios
-            </button>
-            <button 
-              className="btn btn--secondary" 
-              style={{ flex: 1, borderRadius: '8px', minHeight: '44px' }} 
-              onClick={() => {
-                setShowAcompanamientosModal(false);
-                setEditingDishIdx(null);
-                setOpenEmojiPicker(null);
-              }}
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
-      </div>
+    {editingDishIdx !== null && (
+      <AcompanamientosModal
+        dish={dishes[editingDishIdx]}
+        onSave={(validGroups) => {
+          const newDishes = [...dishes];
+          newDishes[editingDishIdx].acompanamientos = validGroups;
+          setDishes(newDishes);
+          showToast('✅ Acompañamientos actualizados');
+          setEditingDishIdx(null);
+        }}
+        onClose={() => setEditingDishIdx(null)}
+      />
     )}
 
     {/* Export Modal */}
