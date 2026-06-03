@@ -432,15 +432,34 @@ const AcompanamientosModal = ({ dish, onSave, onClose }) => {
                           }
                         }}
                       />
-                      <Plus 
-                        size={14} 
-                        style={{ 
-                          position: 'absolute', 
-                          right: '8px', 
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const input = document.getElementById(`new-option-${gIdx}`);
+                          if (input && input.value.trim()) {
+                            addOptionToGroup(gIdx, input.value);
+                            input.value = '';
+                            input.focus();
+                          }
+                        }}
+                        style={{
+                          position: 'absolute',
+                          right: '6px',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
                           color: 'var(--primary)',
-                          pointerEvents: 'none'
-                        }} 
-                      />
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '4px',
+                          borderRadius: '50%',
+                          lineHeight: 1
+                        }}
+                        title="Añadir opción"
+                      >
+                        <Plus size={14} />
+                      </button>
                     </div>
                   </div>
                   
