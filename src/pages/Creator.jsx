@@ -5,7 +5,6 @@ import {
   EMOJIS, 
   autoSuggestEmoji, 
   encodeMenu, 
-  formatPrice, 
   copyToClipboard 
 } from '../utils';
 import { createFullMenu, getRestaurantes, getTiposPlatillo, getRestauranteById, uploadLogo } from '../api';
@@ -25,7 +24,8 @@ import {
   IceCream,
   X,
   Settings,
-  ImageDown
+  ImageDown,
+  Copy
 } from 'lucide-react';
 import ExportModal from '../components/ExportModal';
 
@@ -552,6 +552,7 @@ const Creator = () => {
   const [showExtrasModal, setShowExtrasModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [editingDishIdx, setEditingDishIdx] = useState(null);
+  const [showBizEdit, setShowBizEdit] = useState(false);
 
   const [history, setHistory] = useState(() => {
     try {
@@ -590,6 +591,8 @@ const Creator = () => {
                 emoji: p.emoji || '🍽️',
                 name: p.nombre,
                 price: p.precio || '',
+                activo: p.activo !== false && p.activo !== 0,
+                disponibilidad: p.disponibilidad || 'ALTA',
                 acompanamientos: (() => { try { const v = p.acompanamientos; if (!v) return []; if (Array.isArray(v)) return v; return JSON.parse(v); } catch(e) { return []; } })()
               })));
             }
@@ -664,6 +667,8 @@ const Creator = () => {
       emoji,
       name: type === 'completo' ? 'Almuerzo Completo' : '',
       price: '',
+      activo: true,
+      disponibilidad: 'ALTA',
       acompanamientos: []
     };
     
@@ -694,6 +699,26 @@ const Creator = () => {
   const removeDish = (idx) => {
     setDishes(dishes.filter((_, i) => i !== idx));
     setOpenEmojiIdx(null);
+  };
+
+  const duplicateDish = (idx) => {
+    const dishToCopy = dishes[idx];
+    const newDish = {
+      ...JSON.parse(JSON.stringify(dishToCopy)),
+      id: Date.now(),
+      name: dishToCopy.name ? `${dishToCopy.name} (Copia)` : ''
+    };
+    const updated = [...dishes];
+    updated.splice(idx + 1, 0, newDish);
+    setDishes(updated);
+    showToast('📋 Platillo duplicado');
+  };
+
+  const clearAllDishes = () => {
+    if (window.confirm('⚠️ ¿Estás seguro de que deseas eliminar todos los platillos de la lista?')) {
+      setDishes([]);
+      showToast('🗑️ Lista de platillos vaciada');
+    }
   };
 
   // ========== ACOMPAÑAMIENTOS - NUEVO SISTEMA ==========
@@ -733,14 +758,15 @@ const Creator = () => {
     if (!bizInfo.name.trim()) { showToast('⚠️ Ingresa el nombre del negocio'); return; }
     if (!bizInfo.phone.trim()) { showToast('⚠️ Ingresa tu número de WhatsApp'); return; }
 
-    const hasSoup = dishes.some(d => d.type === 'sopa');
-    const hasSecond = dishes.some(d => d.type === 'segundo');
+    const activeDishes = dishes.filter(d => d.disponibilidad !== 'NO_DISPONIBLE' && d.activo !== false && d.activo !== 0);
+    const hasSoup = activeDishes.some(d => d.type === 'sopa');
+    const hasSecond = activeDishes.some(d => d.type === 'segundo');
     if (hasSoup && hasSecond && !bizInfo.menuPrice.trim()) {
       showToast('⚠️ Ingresa el precio del menú completo');
       return;
     }
     
-    const validItems = dishes.filter(d => d.name.trim() !== '');
+    const validItems = activeDishes.filter(d => d.name.trim() !== '');
 
     const data = {
       name: bizInfo.name.trim(),
@@ -838,6 +864,8 @@ const Creator = () => {
     setBizInfo(entry.bizInfo);
     setDishes((entry.dishes || []).map(d => ({
       ...d,
+      activo: d.activo !== false && d.activo !== 0,
+      disponibilidad: d.disponibilidad || 'ALTA',
       acompanamientos: d.acompanamientos || []
     })));
     showToast('📋 Menú restaurado');
@@ -915,86 +943,179 @@ const Creator = () => {
 
       {/* Business Info */}
       <div className="section-card">
-        <div className="section-title">Información General</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-          <div className="form-group">
-            <label className="form-label">Nombre del restaurante</label>
-            <input className="form-input" id="biz-name" type="text" placeholder="ej. Alter NATIVA" value={bizInfo.name} onChange={handleBizChange} />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">WhatsApp de Pedidos</label>
-            <div className="phone-row">
-              <div className="phone-prefix">{bizInfo.prefix}</div>
-              <div className="phone-input-wrap">
-                <input className="form-input" id="biz-phone" type="tel" placeholder="Número de celular" value={bizInfo.phone} onChange={handleBizChange} />
+        {bizInfo.name?.trim() && !showBizEdit ? (
+          /* ── Collapsed summary with chips ── */
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {bizInfo.imagen_url ? (
+                  <img src={bizInfo.imagen_url} alt="Logo" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--outline-variant)' }} />
+                ) : (
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--surface-container)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>🏢</div>
+                )}
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '16px' }}>{bizInfo.name}</div>
+                  {bizInfo.tagline && <div style={{ fontSize: '12px', color: 'var(--on-surface-variant)', marginTop: '2px' }}>{bizInfo.tagline}</div>}
+                </div>
               </div>
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm"
+                style={{ fontSize: '12px', gap: '4px', flexShrink: 0 }}
+                onClick={() => setShowBizEdit(true)}
+              >
+                <Settings size={14} /> Editar
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {bizInfo.phone && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--surface-container-low)', border: '1px solid var(--outline-variant)', borderRadius: '999px', padding: '4px 12px', fontSize: '12px', fontWeight: 600, color: 'var(--on-surface-variant)' }}>📱 {bizInfo.prefix} {bizInfo.phone}</span>
+              )}
+              {bizInfo.menuPrice && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--primary-container)', border: '1px solid var(--primary)', borderRadius: '999px', padding: '4px 12px', fontSize: '12px', fontWeight: 700, color: 'var(--primary)' }}>💰 Menú Bs.{bizInfo.menuPrice}</span>
+              )}
+              {bizInfo.address && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--surface-container-low)', border: '1px solid var(--outline-variant)', borderRadius: '999px', padding: '4px 12px', fontSize: '12px', fontWeight: 600, color: 'var(--on-surface-variant)' }}>📍 {bizInfo.address.length > 25 ? bizInfo.address.slice(0,25) + '…' : bizInfo.address}</span>
+              )}
+              {bizInfo.promo && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#fff9e6', border: '1px solid #e8d44d', borderRadius: '999px', padding: '4px 12px', fontSize: '12px', fontWeight: 600, color: '#8a6d00' }}>⭐ Promo activa</span>
+              )}
+              {bizInfo.slug && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--surface-container-low)', border: '1px solid var(--outline-variant)', borderRadius: '999px', padding: '4px 12px', fontSize: '12px', fontWeight: 600, color: 'var(--on-surface-variant)' }}>🔗 /{bizInfo.slug}</span>
+              )}
+              {bizInfo.imagen_url && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--surface-container-low)', border: '1px solid var(--outline-variant)', borderRadius: '999px', padding: '4px 12px', fontSize: '12px', fontWeight: 600, color: 'var(--on-surface-variant)' }}>🖼️ Logo</span>
+              )}
             </div>
           </div>
+        ) : (
+          /* ── Expanded edit form ── */
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className="section-title" style={{ margin: 0 }}>Información General</div>
+              {bizInfo.name?.trim() && (
+                <button
+                  type="button"
+                  className="btn btn--primary btn--sm"
+                  style={{ fontSize: '12px', gap: '4px' }}
+                  onClick={() => setShowBizEdit(false)}
+                >
+                  ✓ Listo
+                </button>
+              )}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', marginTop: 'var(--space-md)' }}>
+              <div className="form-group">
+                <label className="form-label">Nombre del restaurante</label>
+                <input className="form-input" id="biz-name" type="text" placeholder="ej. Alter NATIVA" value={bizInfo.name} onChange={handleBizChange} />
+              </div>
 
-          <div className="form-group">
-            <label className="form-label">Logo del Restaurante</label>
-            <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center' }}>
-              {bizInfo.imagen_url ? (
-                <img 
-                  src={bizInfo.imagen_url} 
-                  alt="Logo preview" 
-                  style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--outline-variant)' }} 
-                />
+              {bizInfo.name?.trim() ? (
+                <>
+                  <div className="form-group">
+                    <label className="form-label">WhatsApp de Pedidos</label>
+                    <div className="phone-row">
+                      <div className="phone-prefix">{bizInfo.prefix}</div>
+                      <div className="phone-input-wrap">
+                        <input className="form-input" id="biz-phone" type="tel" placeholder="Número de celular" value={bizInfo.phone} onChange={handleBizChange} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Logo del Restaurante</label>
+                    <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center' }}>
+                      {bizInfo.imagen_url ? (
+                        <img 
+                          src={bizInfo.imagen_url} 
+                          alt="Logo preview" 
+                          style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--outline-variant)' }} 
+                        />
+                      ) : (
+                        <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--surface-container)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
+                          🏢
+                        </div>
+                      )}
+                      <div style={{ flex: 1 }}>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          style={{ display: 'none' }} 
+                          id="logo-upload" 
+                          onChange={handleLogoUpload} 
+                        />
+                        <label 
+                          htmlFor="logo-upload" 
+                          className="btn btn--secondary btn--sm" 
+                          style={{ cursor: 'pointer', display: 'inline-flex' }}
+                        >
+                          {uploadingLogo ? 'Subiendo...' : 'Seleccionar Logo'}
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {(dishes.some(d => d.type === 'sopa') && dishes.some(d => d.type === 'segundo')) && (
+                    <div className="form-group animate-in" style={{ background: 'var(--primary-container)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--primary)' }}>
+                      <label className="form-label" style={{ color: 'var(--on-primary-container)', fontWeight: 800 }}>💰 Precio Almuerzo Completo (Sopa + Segundo)</label>
+                      <div className="price-row" style={{ background: 'var(--surface)' }}>
+                        <span className="price-symbol">Bs</span>
+                        <input className="form-input price-input" id="biz-menuPrice" type="number" placeholder="ej. 15" value={bizInfo.menuPrice} onChange={handleBizChange} />
+                      </div>
+                      <span style={{ fontSize: '11px', color: 'var(--primary)', marginTop: '4px', display: 'block' }}>Este precio se mostrará como el costo del menú completo.</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    className="btn btn--ghost btn--sm"
+                    style={{ alignSelf: 'flex-start', gap: '8px' }}
+                    onClick={() => setShowExtrasModal(true)}
+                  >
+                    <Settings size={16} /> Opciones adicionales
+                    {(bizInfo.promo || bizInfo.sides || bizInfo.address || bizInfo.tagline) && (
+                      <span style={{ background: 'var(--primary)', color: '#fff', borderRadius: '999px', fontSize: '11px', padding: '1px 7px', marginLeft: '4px' }}>
+                        {[bizInfo.promo, bizInfo.sides, bizInfo.address, bizInfo.tagline].filter(Boolean).length}
+                      </span>
+                    )}
+                  </button>
+                </>
               ) : (
-                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--surface-container)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
-                  🏢
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '12px 14px',
+                  background: 'var(--surface-container-low)',
+                  borderRadius: '8px',
+                  border: '1px dashed var(--outline-variant)',
+                  fontSize: '13px',
+                  color: 'var(--on-surface-variant)'
+                }}>
+                  <span style={{ fontSize: '16px' }}>💡</span>
+                  <span>Ingresa el nombre del restaurante para configurar el WhatsApp y logo.</span>
                 </div>
               )}
-              <div style={{ flex: 1 }}>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  style={{ display: 'none' }} 
-                  id="logo-upload" 
-                  onChange={handleLogoUpload} 
-                />
-                <label 
-                  htmlFor="logo-upload" 
-                  className="btn btn--secondary btn--sm" 
-                  style={{ cursor: 'pointer', display: 'inline-flex' }}
-                >
-                  {uploadingLogo ? 'Subiendo...' : 'Seleccionar Logo'}
-                </label>
-              </div>
             </div>
           </div>
-          
-          {(dishes.some(d => d.type === 'sopa') && dishes.some(d => d.type === 'segundo')) && (
-            <div className="form-group animate-in" style={{ background: 'var(--primary-container)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--primary)' }}>
-              <label className="form-label" style={{ color: 'var(--on-primary-container)', fontWeight: 800 }}>💰 Precio Almuerzo Completo (Sopa + Segundo)</label>
-              <div className="price-row" style={{ background: 'var(--surface)' }}>
-                <span className="price-symbol">Bs</span>
-                <input className="form-input price-input" id="biz-menuPrice" type="number" placeholder="ej. 15" value={bizInfo.menuPrice} onChange={handleBizChange} />
-              </div>
-              <span style={{ fontSize: '11px', color: 'var(--primary)', marginTop: '4px', display: 'block' }}>Este precio se mostrará como el costo del menú completo.</span>
-            </div>
-          )}
-
-          <button
-            type="button"
-            className="btn btn--ghost btn--sm"
-            style={{ alignSelf: 'flex-start', gap: '8px' }}
-            onClick={() => setShowExtrasModal(true)}
-          >
-            <Settings size={16} /> Opciones adicionales
-            {(bizInfo.promo || bizInfo.sides || bizInfo.address || bizInfo.tagline) && (
-              <span style={{ background: 'var(--primary)', color: '#fff', borderRadius: '999px', fontSize: '11px', padding: '1px 7px', marginLeft: '4px' }}>
-                {[bizInfo.promo, bizInfo.sides, bizInfo.address, bizInfo.tagline].filter(Boolean).length}
-              </span>
-            )}
-          </button>
-        </div>
+        )}
       </div>
 
       {/* Menu Items */}
       <div className="section-card">
-        <div className="section-title">Platillos del Día</div>
+        <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>Platillos del Día</span>
+          {dishes.length > 0 && (
+            <button 
+              type="button" 
+              className="btn btn--ghost btn--sm" 
+              style={{ color: 'var(--error)', fontSize: '12px', padding: '4px 8px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }} 
+              onClick={clearAllDishes}
+            >
+              <Trash2 size={14} /> Limpiar todo
+            </button>
+          )}
+        </div>
         
         <div id="dishes-list">
           {dishes.length === 0 && (
@@ -1032,16 +1153,19 @@ const Creator = () => {
                   const typeIndices = dishes.reduce((acc, item, index) => {
                     if (item.type === d.type) acc.push(index);
                     return acc;
-                  }, []);
+                    }, []);
                   const groupIndex = typeIndices.indexOf(i);
                   const isFirstInGroup = groupIndex === 0;
                   const isLastInGroup = groupIndex === typeIndices.length - 1;
+
+                  const isActive = d.activo !== false && d.activo !== 0 && d.disponibilidad !== 'NO_DISPONIBLE';
 
                   return (
                     <div 
                       key={d.id || i} 
                       data-dish-id={d.id} 
-                      className={`dish-item dish-item--${d.type.replace(' ', '-')} ${highlightedDishId === d.id ? 'dish-item--highlight' : ''}`}
+                      className={`dish-item dish-item--${d.type.replace(' ', '-')} ${highlightedDishId === d.id ? 'dish-item--highlight' : ''} ${!isActive ? 'dish-item--inactive' : ''}`}
+                      style={!isActive ? { opacity: 0.6, borderLeft: '4px solid var(--outline)', filter: 'grayscale(25%)' } : {}}
                     >
                       <div className="dish-main-content">
                         <div className="dish-emoji-col">
@@ -1053,9 +1177,19 @@ const Creator = () => {
                               </div>
                             )}
                           </div>
-                          <button className="dish-remove-btn" onClick={() => removeDish(i)}>
-                            <Trash2 size={20} />
-                          </button>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
+                            <button className="dish-remove-btn" onClick={() => removeDish(i)} title="Eliminar platillo">
+                              <Trash2 size={18} />
+                            </button>
+                            <button 
+                              className="dish-remove-btn" 
+                              onClick={() => duplicateDish(i)} 
+                              title="Duplicar platillo"
+                              style={{ color: 'var(--on-surface-variant)', opacity: 0.7 }}
+                            >
+                              <Copy size={16} />
+                            </button>
+                          </div>
                         </div>
 
                         <div className="dish-inputs-col">
@@ -1079,7 +1213,7 @@ const Creator = () => {
                             </div>
                           )}
                           
-                          <div style={{ marginTop: '8px' }}>
+                          <div style={{ marginTop: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                             <button
                               type="button"
                               className="btn btn--secondary btn--sm"
@@ -1097,23 +1231,46 @@ const Creator = () => {
                                   display: 'inline-flex', 
                                   alignItems: 'center', 
                                   justifyContent: 'center',
-                                  fontWeight: 'bold'
+                                  fontWeight: 'bold',
+                                  marginLeft: '6px'
                                 }}>
                                   {d.acompanamientos.length}
                                 </span>
                               )}
                             </button>
-                            
-                            {d.acompanamientos && d.acompanamientos.length > 0 && (
-                              <div style={{ fontSize: '10px', color: 'var(--on-surface-variant)', opacity: 0.8, display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
-                                {d.acompanamientos.map((g, idx) => (
-                                  <span key={idx} style={{ background: 'var(--surface-low)', border: '1px solid var(--outline-variant)', padding: '2px 6px', borderRadius: '4px' }}>
-                                    <b>{g.titulo}:</b> {g.opciones.map(op => `${op.emoji || ''} ${op.text || op}`).join(', ')}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
+
+                            <select
+                              className="btn btn--sm"
+                              style={{
+                                fontSize: '11px',
+                                padding: '4px 10px',
+                                height: '28px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                border: isActive ? '1px solid var(--outline-variant)' : '1.5px solid var(--error)',
+                                fontWeight: isActive ? 500 : 700,
+                                appearance: 'none',
+                                paddingRight: '20px'
+                              }}
+                              value={d.disponibilidad || 'ALTA'}
+                              onChange={(e) => updateDish(i, 'disponibilidad', e.target.value)}
+                            >
+                              <option value="ALTA">🟢 Alta</option>
+                              <option value="MEDIA">🟡 Media</option>
+                              <option value="BAJA">🟠 Baja</option>
+                              <option value="NO_DISPONIBLE">🔴 No Disponible</option>
+                            </select>
                           </div>
+                          
+                          {d.acompanamientos && d.acompanamientos.length > 0 && (
+                            <div style={{ fontSize: '10px', color: 'var(--on-surface-variant)', opacity: 0.8, display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
+                              {d.acompanamientos.map((g, idx) => (
+                                <span key={idx} style={{ background: 'var(--surface-low)', border: '1px solid var(--outline-variant)', padding: '2px 6px', borderRadius: '4px' }}>
+                                  <b>{g.titulo}:</b> {g.opciones.map(op => `${op.emoji || ''} ${op.text || op}`).join(', ')}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
 
                         <div className="dish-order-col">

@@ -228,6 +228,8 @@ class ApiController extends Controller
                     'precio' => $item['price'] ?? 0,
                     'emoji' => $item['emoji'] ?? null,
                     'orden' => $i,
+                    'activo' => isset($item['activo']) ? (int)$item['activo'] : 1,
+                    'disponibilidad' => $item['disponibilidad'] ?? 'ALTA',
                     'acompanamientos' => !empty($item['acompanamientos'])
                         ? json_encode($item['acompanamientos'])
                         : null

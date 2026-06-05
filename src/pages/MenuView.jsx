@@ -181,7 +181,7 @@ const MenuView = () => {
           )}
 
           {['sopa', 'segundo', 'segundo suelto', 'postre', 'bebida'].map(type => {
-            const sectionItems = data.items.filter(item => (item.tipo || item.type || '').toLowerCase() === type);
+            const sectionItems = data.items.filter(item => (item.tipo || item.type || '').toLowerCase() === type && (item.activo !== false && item.activo !== 0) && item.disponibilidad !== 'NO_DISPONIBLE');
             if (sectionItems.length === 0) return null;
 
             return (
@@ -200,6 +200,12 @@ const MenuView = () => {
                         <div className="menu-card-emoji">{item.emoji}</div>
                         <div style={{ flex: 1 }}>
                           <div className="menu-card-name">{item.nombre || item.name}</div>
+                          {item.disponibilidad === 'MEDIA' && (
+                            <div style={{ fontSize: '11px', color: '#b28e00', background: '#fff9e6', padding: '2px 6px', borderRadius: '4px', display: 'inline-block', marginTop: '4px', fontWeight: 'bold' }}>🟡 Pocas unidades</div>
+                          )}
+                          {item.disponibilidad === 'BAJA' && (
+                            <div style={{ fontSize: '11px', color: '#d32f2f', background: '#ffebee', padding: '2px 6px', borderRadius: '4px', display: 'inline-block', marginTop: '4px', fontWeight: 'bold' }}>🟠 Por agotarse</div>
+                          )}
                         </div>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>

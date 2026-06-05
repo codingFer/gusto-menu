@@ -9,7 +9,7 @@ class Platillo extends Model
     public $timestamps = false;
     
     protected $fillable = [
-        'restaurante_id', 'tipo_id', 'nombre', 'precio', 'emoji', 'orden', 'activo', 'acompanamientos'
+        'restaurante_id', 'tipo_id', 'nombre', 'precio', 'emoji', 'orden', 'activo', 'disponibilidad', 'acompanamientos'
     ];
 
     public function restaurante()
